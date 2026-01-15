@@ -43,3 +43,21 @@ form.addEventListener('submit', async function(event) {
         btn.textContent = 'Отправить';
     });
 });
+const topBtn = document.getElementById("scrollTopBtn");
+
+// Показываем кнопку при прокрутке вниз на 300px
+if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
+    topBtn.style.display = "block";
+    topBtn.style.opacity = "1";
+} else {
+    topBtn.style.opacity = "0";
+    setTimeout(() => { if(topBtn.style.opacity === "0") topBtn.style.display = "none"; }, 300);
+}
+
+// При клике плавно возвращаемся наверх
+topBtn.addEventListener("click", () => {
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+    });
+});
