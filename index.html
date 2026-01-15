@@ -4,12 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="NetWorkers - профессиональная разработка и дизайн">
-
-<h1>Инновации с NetWorkers</h1>
-<p>Мы создаем цифровые решения будущего.</p>
-    <title>NetWorkers</title>
+    <title>NetWorkers | Цифровые решения</title>
     
-    <link rel="icon" type="image/png" href="favicon.png"> 
+    <link rel="icon" type="image/jpeg" href="favicon.jpg"> 
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -21,65 +18,133 @@
                 <li><a href="#home">Главная</a></li>
                 <li><a href="#gallery">Галерея</a></li>
                 <li><a href="#contact">Контакты</a></li>
+                <li>
+                    <button id="theme-toggle" aria-label="Переключить тему">🌙</button>
+                </li>
             </ul>
         </nav>
     </header>
 
     <section id="home" class="hero">
-        <div class="hero-content">
-            <h1>Привет, User!</h1>
-            <p>Добро пожаловать на сайт !</p>
+        <div class="hero-content reveal">
+            <h1>Инновации с NetWorkers</h1>
+            <p>Мы создаем цифровые решения будущего.</p>
             <a href="#contact" class="btn">Связаться со мной</a>
         </div>
     </section>
 
     <section id="gallery" class="container">
-        <h2>Мои работы</h2>
+        <h2 class="reveal">Мои работы</h2>
         <div class="gallery-grid">
-            <div class="card">
-                <img src="https://placehold.co/600x400/007bff/ffffff?text=Проект+1" alt="Проект 1">
-                <h3>Дизайн сайта</h3>
+            <div class="card reveal">
+                <img src="https://placehold.co/600x400/007bff/ffffff?text=Web+Design" alt="Проект 1">
+                <div class="card-info">
+                    <h3>Дизайн сайта</h3>
+                    <p>Современные интерфейсы для бизнеса.</p>
+                </div>
             </div>
-            <div class="card">
-                <img src="https://placehold.co/600x400/ff5733/ffffff?text=Проект+2" alt="Проект 2">
-                <h3>Мобильное приложение</h3>
+            <div class="card reveal">
+                <img src="https://placehold.co/600x400/ff5733/ffffff?text=Mobile+App" alt="Проект 2">
+                <div class="card-info">
+                    <h3>Мобильное приложение</h3>
+                    <p>Удобство в каждом пикселе.</p>
+                </div>
             </div>
-            <div class="card">
-                <img src="https://placehold.co/600x400/28a745/ffffff?text=Проект+3" alt="Проект 3">
-                <h3>Логотип</h3>
+            <div class="card reveal">
+                <img src="https://placehold.co/600x400/28a745/ffffff?text=Branding" alt="Проект 3">
+                <div class="card-info">
+                    <h3>Брендинг</h3>
+                    <p>Создание уникального стиля.</p>
+                </div>
             </div>
         </div>
     </section>
+<li><a href="#reviews">Отзывы</a></li>
 
-    <section id="contact" class="container bg-light">
-    <h2>Напишите мне</h2>
-    <form id="contactForm" action="https://formspree.io/f/mqeealpd" method="POST">
+<section id="reviews" class="container">
+    <h2 class="reveal">Отзывы клиентов</h2>
+    <div class="reviews-grid">
+        <div class="review-card reveal">
+            <p class="review-text">"NetWorkers создали для нас потрясающий сайт. Профессионализм и внимание к деталям на высшем уровне!"</p>
+            <div class="review-author">
+                <strong>Александр Петров</strong>
+                <span>CEO, TechStart</span>
+            </div>
+        </div>
+        <div class="review-card reveal">
+            <p class="review-text">"Очень довольна мобильным приложением. Интерфейс удобный, а работа выполнена точно в срок."</p>
+            <div class="review-author">
+                <strong>Мария Иванова</strong>
+                <span>Дизайнер</span>
+            </div>
+        </div>
+        <div class="review-card reveal">
+            <p class="review-text">"Лучшее решение для нашего ребрендинга. Логотип получился именно таким, как мы и мечтали."</p>
+            <div class="review-author">
+                <strong>Дмитрий Соколов</strong>
+                <span>Основатель CoffeeTime</span>
+            </div>
+        </div>
+    </div>
+</section>
+<li><a href="#faq">FAQ</a></li>
+
+<section id="faq" class="container bg-light">
+    <h2 class="reveal">Часто задаваемые вопросы</h2>
+    <div class="faq-container reveal">
         
-        <div class="form-group">
-            <label for="name">Ваше имя:</label>
-            <input type="text" id="name" name="name" required placeholder="Иван Иванов">
+        <div class="faq-item">
+            <button class="faq-question">Сколько времени занимает разработка сайта? <span>+</span></button>
+            <div class="faq-answer">
+                <p>В среднем создание лендинга занимает от 5 до 10 рабочих дней, в зависимости от сложности дизайна и функционала.</p>
+            </div>
         </div>
 
-        <div class="form-group">
-            <label for="email">Ваш Email:</label>
-            <input type="email" id="email" name="email" required placeholder="ivan@example.com">
+        <div class="faq-item">
+            <button class="faq-question">Работаете ли вы по предоплате? <span>+</span></button>
+            <div class="faq-answer">
+                <p>Да, обычно работа делится на этапы с предоплатой 30-50% перед началом проектирования.</p>
+            </div>
         </div>
 
-        <div class="form-group">
-            <label for="message">Сообщение:</label>
-            <textarea id="message" name="message" rows="5" required placeholder="Текст сообщения..."></textarea>
+        <div class="faq-item">
+            <button class="faq-question">Предоставляете ли вы поддержку после запуска? <span>+</span></button>
+            <div class="faq-answer">
+                <p>Конечно! Я обеспечиваю бесплатную техническую поддержку в течение первого месяца после запуска сайта.</p>
+            </div>
         </div>
 
-        <button type="submit" id="submitBtn" class="btn btn-dark">Отправить</button>
-        <p id="form-status"></p>
-    </form>
+    </div>
 </section>
 
+    <section id="contact" class="container bg-light">
+        <div class="form-wrapper reveal">
+            <h2>Напишите мне</h2>
+            <form id="contactForm" action="https://formspree.io/f/mqeealpd" method="POST">
+                <div class="form-group">
+                    <label for="name">Ваше имя</label>
+                    <input type="text" id="name" name="name" required placeholder="Иван Иванов">
+                </div>
+                <div class="form-group">
+                    <label for="email">Ваш Email</label>
+                    <input type="email" id="email" name="email" required placeholder="ivan@example.com">
+                </div>
+                <div class="form-group">
+                    <label for="message">Сообщение</label>
+                    <textarea id="message" name="message" rows="5" required placeholder="Расскажите о вашем проекте..."></textarea>
+                </div>
+                <button type="submit" id="submitBtn" class="btn btn-dark">Отправить сообщение</button>
+                <p id="form-status"></p>
+            </form>
+        </div>
+    </section>
+
     <footer>
-        <p>&copy; 2024 Сделано с любовью.</p>
+        <p>&copy; 2024 NetWorkers. Сделано с любовью.</p>
     </footer>
 
-    <script src="script.js"></script>
     <button id="scrollTopBtn" title="Наверх">↑</button>
+
+    <script src="script.js"></script>
 </body>
 </html>

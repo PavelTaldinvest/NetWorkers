@@ -1,63 +1,97 @@
+// 1. Обработка формы
 const form = document.getElementById('contactForm');
 const statusTxt = document.getElementById('form-status');
 
 form.addEventListener('submit', async function(event) {
-    event.preventDefault(); // Останавливаем стандартную перезагрузку страницы
-    
-    // Получаем данные из формы
+    event.preventDefault();
     const data = new FormData(event.target);
-    
-    // Делаем кнопку неактивной на время отправки
     const btn = document.getElementById('submitBtn');
+    
     btn.disabled = true;
     btn.textContent = 'Отправка...';
 
-    // Отправляем данные на Formspree
     fetch(event.target.action, {
         method: form.method,
         body: data,
-        headers: {
-            'Accept': 'application/json'
-        }
+        headers: { 'Accept': 'application/json' }
     }).then(response => {
         if (response.ok) {
-            statusTxt.innerHTML = "Спасибо! Ваше сообщение успешно отправлено.";
-            statusTxt.style.color = "green";
-            form.reset(); // Очищаем поля
+            statusTxt.innerHTML = "Успешно! Я свяжусь с вами в ближайшее время.";
+            statusTxt.style.color = "#28a745";
+            form.reset();
         } else {
-            response.json().then(data => {
-                if (Object.hasOwn(data, 'errors')) {
-                    statusTxt.innerHTML = data["errors"].map(error => error["message"]).join(", ");
-                } else {
-                    statusTxt.innerHTML = "Упс! Возникла проблема при отправке.";
-                }
-                statusTxt.style.color = "red";
-            })
+            statusTxt.innerHTML = "Ошибка при отправке.";
+            statusTxt.style.color = "#dc3545";
         }
-    }).catch(error => {
-        statusTxt.innerHTML = "Ошибка сети. Попробуйте позже.";
-        statusTxt.style.color = "red";
+    }).catch(() => {
+        statusTxt.innerHTML = "Ошибка сети.";
     }).finally(() => {
-        // Возвращаем кнопку в исходное состояние
         btn.disabled = false;
-        btn.textContent = 'Отправить';
+        btn.textContent = 'Отправить сообщение';
     });
 });
+
+// 2. Логика кнопки "Наверх" и анимации появления
 const topBtn = document.getElementById("scrollTopBtn");
 
-// Показываем кнопку при прокрутке вниз на 300px
-if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
-    topBtn.style.display = "block";
-    topBtn.style.opacity = "1";
-} else {
-    topBtn.style.opacity = "0";
-    setTimeout(() => { if(topBtn.style.opacity === "0") topBtn.style.display = "none"; }, 300);
+window.addEventListener('scroll', () => {
+    // Показ кнопки
+    if (window.scrollY > 400) {
+        topBtn.classList.add("show");
+    } else {
+        topBtn.classList.remove("show");
+    }
+
+    // Анимация элементов при прокрутке
+    const reveals = document.querySelectorAll(".reveal");
+    reveals.forEach(el => {
+        const windowHeight = window.innerHeight;
+        const elementTop = el.getBoundingClientRect().top;
+        if (elementTop < windowHeight - 100) {
+            el.classList.add("active");
+        }
+    });
+});
+
+topBtn.addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+});
+
+// 3. Темная тема
+const themeToggle = document.getElementById('theme-toggle');
+const currentTheme = localStorage.getItem('theme');
+
+if (currentTheme) {
+    document.documentElement.setAttribute('data-theme', currentTheme);
+    themeToggle.textContent = currentTheme === 'dark' ? '☀️' : '🌙';
 }
 
-// При клике плавно возвращаемся наверх
-topBtn.addEventListener("click", () => {
-    window.scrollTo({
-        top: 0,
-        behavior: "smooth"
+themeToggle.addEventListener('click', () => {
+    let theme = document.documentElement.getAttribute('data-theme');
+    if (theme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'light');
+        localStorage.setItem('theme', 'light');
+        themeToggle.textContent = '🌙';
+    } else {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        localStorage.setItem('theme', 'dark');
+        themeToggle.textContent = '☀️';
+    }
+});
+// Логика аккордеона FAQ
+const faqQuestions = document.querySelectorAll('.faq-question');
+
+faqQuestions.forEach(question => {
+    question.addEventListener('click', () => {
+        const parent = question.parentElement;
+        
+        // Закрыть другие открытые вопросы (опционально)
+        /*
+        document.querySelectorAll('.faq-item').forEach(item => {
+            if (item !== parent) item.classList.remove('active');
+        });
+        */
+        
+        parent.classList.toggle('active');
     });
 });
