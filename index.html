@@ -3,364 +3,153 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Egypt Estate - Недвижимость в Египте">
-    <title>Egypt Estate | Недвижимость в Египте</title>
-    
-    <link rel="icon" type="image/png" href="favicon.png"> 
+    <title>Egypt Estate - Недвижимость в Египте</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-
-    <header>
-        <div class="logo">🏠 Egypt Estate</div>
-        <nav>
-            <ul>
-                <li><a href="#home" data-i18n="nav_home">Главная</a></li>
-                <li><a href="#properties" data-i18n="nav_properties">Недвижимость</a></li>
-                <li><a href="#contact" data-i18n="nav_contact">Контакты</a></li>
-                <li><a href="#admin" data-i18n="nav_admin">Админ</a></li>
-                <li>
-                    <select id="currency-select" aria-label="Выбрать валюту">
-                        <option value="USD">$ USD</option>
-                        <option value="EUR">€ EUR</option>
-                        <option value="EGP">£ EGP</option>
-                        <option value="RUB">₽ RUB</option>
+    <div class="app-container">
+        <header class="header">
+            <div class="container header-content">
+                <div class="logo">
+                    <i class="fa-solid fa-pyramid"></i>
+                    <span>Egypt Estate</span>
+                </div>
+                <nav class="nav-menu">
+                    <a href="#" data-page="home" class="nav-link active" data-i18n="nav.home">Главная</a>
+                    <a href="#" data-page="catalog" class="nav-link" data-i18n="nav.catalog">Каталог</a>
+                    <a href="#" data-page="admin" class="nav-link admin-link" data-i18n="nav.admin">Админка</a>
+                </nav>
+                <div class="header-controls">
+                    <select id="currency-select" class="control-select">
+                        <option value="USD">USD</option>
+                        <option value="EUR">EUR</option>
+                        <option value="EGP">EGP</option>
+                        <option value="RUB">RUB</option>
                     </select>
-                </li>
-                <li>
-                    <select id="lang-select" aria-label="Выбрать язык">
-                        <option value="ru">🇷🇺 RU</option>
-                        <option value="en">🇬🇧 EN</option>
-                    </select>
-                </li>
-                <li>
-                    <button id="theme-toggle" aria-label="Переключить тему">🌙</button>
-                </li>
-            </ul>
-        </nav>
-    </header>
-
-    <section id="home" class="hero">
-        <div class="hero-content reveal">
-            <h1 data-i18n="hero_title">Недвижимость в Египте</h1>
-            <p data-i18n="hero_subtitle">Найдите свой идеальный дом на побережье Красного моря</p>
-            <a href="#properties" class="btn" data-i18n="hero_cta">Смотреть объекты</a>
-        </div>
-    </section>
-
-    <!-- Фильтры и поиск -->
-    <section id="filters" class="container bg-light">
-        <div class="filter-wrapper reveal">
-            <h2 data-i18n="filters_title">Поиск недвижимости</h2>
-            <div class="filter-grid">
-                <div class="form-group">
-                    <label for="search-input" data-i18n="search_label">Поиск по названию</label>
-                    <input type="text" id="search-input" placeholder="Введите название...">
-                </div>
-                <div class="form-group">
-                    <label for="city-filter" data-i18n="city_label">Город</label>
-                    <select id="city-filter">
-                        <option value="" data-i18n="all_cities">Все города</option>
-                        <option value="Hurghada">Хургада</option>
-                        <option value="Sharm El Sheikh">Шарм-эль-Шейх</option>
-                        <option value="Cairo">Каир</option>
-                        <option value="El Gouna">Эль Гуна</option>
-                        <option value="Sahl Hasheesh">Сахл Хашиш</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="type-filter" data-i18n="type_label">Тип недвижимости</label>
-                    <select id="type-filter">
-                        <option value="" data-i18n="all_types">Все типы</option>
-                        <option value="apartment" data-i18n="type_apartment">Апартаменты</option>
-                        <option value="villa" data-i18n="type_villa">Вилла</option>
-                        <option value="house" data-i18n="type_house">Дом</option>
-                        <option value="commercial" data-i18n="type_commercial">Коммерческая</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="price-min" data-i18n="price_min_label">Мин. цена</label>
-                    <input type="number" id="price-min" placeholder="0">
-                </div>
-                <div class="form-group">
-                    <label for="price-max" data-i18n="price_max_label">Макс. цена</label>
-                    <input type="number" id="price-max" placeholder="Любая">
-                </div>
-                <div class="form-group">
-                    <label>&nbsp;</label>
-                    <button id="apply-filters" class="btn" data-i18n="apply_filters">Применить</button>
+                    <button id="lang-toggle" class="icon-btn"><span class="lang-flag">🇷🇺</span></button>
+                    <button id="theme-toggle" class="icon-btn"><i class="fa-solid fa-moon"></i></button>
+                    <button id="mobile-menu-btn" class="icon-btn mobile-only"><i class="fa-solid fa-bars"></i></button>
                 </div>
             </div>
-        </div>
-    </section>
+        </header>
 
-    <section id="properties" class="container">
-        <h2 class="reveal" data-i18n="properties_title">Объекты недвижимости</h2>
-        <div class="gallery-grid" id="properties-grid">
-            <!-- Properties will be loaded dynamically -->
-        </div>
-    </section>
-    <!-- Reviews Section -->
-    <section id="reviews" class="container">
-        <h2 class="reveal" data-i18n="reviews_title">Отзывы клиентов</h2>
-        <div class="reviews-grid">
-            <div class="review-card reveal">
-                <p class="review-text" data-i18n="review_1_text">"Egypt Estate помогли нам найти прекрасную виллу в Хургаде. Профессионализм на высшем уровне!"</p>
-                <div class="review-author">
-                    <strong data-i18n="review_1_author">Александр Петров</strong>
-                    <span data-i18n="review_1_role">Предприниматель</span>
-                </div>
-            </div>
-            <div class="review-card reveal">
-                <p class="review-text" data-i18n="review_2_text">"Отличный сервис! Купили апартаменты в Шарм-эль-Шейхе для отдыха. Все прошло гладко."</p>
-                <div class="review-author">
-                    <strong data-i18n="review_2_author">Мария Иванова</strong>
-                    <span data-i18n="review_2_role">Дизайнер</span>
-                </div>
-            </div>
-            <div class="review-card reveal">
-                <p class="review-text" data-i18n="review_3_text">"Лучшее агентство недвижимости в Египте. Рекомендую всем!"</p>
-                <div class="review-author">
-                    <strong data-i18n="review_3_author">Дмитрий Соколов</strong>
-                    <span data-i18n="review_3_role">Инвестор</span>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- FAQ Section -->
-    <section id="faq" class="container bg-light">
-        <h2 class="reveal" data-i18n="faq_title">Часто задаваемые вопросы</h2>
-        <div class="faq-container reveal">
-            
-            <div class="faq-item">
-                <button class="faq-question" data-i18n="faq_q1">Можно ли купить недвижимость иностранцу? <span>+</span></button>
-                <div class="faq-answer">
-                    <p data-i18n="faq_a1">Да, иностранцы могут покупать недвижимость в Египте с некоторыми ограничениями в приграничных зонах.</p>
-                </div>
-            </div>
-
-            <div class="faq-item">
-                <button class="faq-question" data-i18n="faq_q2">Какие дополнительные расходы при покупке? <span>+</span></button>
-                <div class="faq-answer">
-                    <p data-i18n="faq_a2">При покупке необходимо оплатить регистрационный сбор (около 4% от стоимости) и юридические услуги.</p>
-                </div>
-            </div>
-
-            <div class="faq-item">
-                <button class="faq-question" data-i18n="faq_q3">Предоставляете ли вы помощь в получении визы? <span>+</span></button>
-                <div class="faq-answer">
-                    <p data-i18n="faq_a3">Да, мы помогаем нашим клиентам с оформлением всех необходимых документов для получения резидентской визы.</p>
-                </div>
-            </div>
-
-        </div>
-    </section>
-    
-    <!-- Contact Section -->
-    <section id="contact" class="container bg-light">
-        <div class="form-wrapper reveal">
-            <h2 data-i18n="contact_title">Оставьте заявку</h2>
-            <form id="contactForm">
-                <div class="form-group">
-                    <label for="name" data-i18n="label_name">Ваше имя</label>
-                    <input type="text" id="name" name="name" required placeholder="Иван Иванов">
-                </div>
-                <div class="form-group">
-                    <label for="email" data-i18n="label_email">Ваш Email</label>
-                    <input type="email" id="email" name="email" required placeholder="ivan@example.com">
-                </div>
-                <div class="form-group">
-                    <label for="phone" data-i18n="label_phone">Телефон</label>
-                    <input type="tel" id="phone" name="phone" placeholder="+7 (999) 000-00-00">
-                </div>
-                <div class="form-group">
-                    <label for="property-interest" data-i18n="label_property">Интересующий объект</label>
-                    <select id="property-interest" name="property">
-                        <option value="" data-i18n="select_property">Выберите объект</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="message" data-i18n="label_message">Сообщение</label>
-                    <textarea id="message" name="message" rows="5" required placeholder="Расскажите о ваших предпочтениях..."></textarea>
-                </div>
-                <button type="submit" id="submitBtn" class="btn btn-dark" data-i18n="submit_btn">Отправить заявку</button>
-                <p id="form-status"></p>
-            </form>
-        </div>
-    </section>
-
-    <!-- Admin Section -->
-    <section id="admin" class="container bg-light">
-        <div class="admin-wrapper reveal">
-            <h2 data-i18n="admin_title">Панель администратора</h2>
-            
-            <div class="admin-login" id="admin-login-panel">
-                <h3 data-i18n="admin_login">Вход для администраторов</h3>
-                <form id="adminLoginForm">
-                    <div class="form-group">
-                        <label for="admin-username" data-i18n="label_username">Логин</label>
-                        <input type="text" id="admin-username" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="admin-password" data-i18n="label_password">Пароль</label>
-                        <input type="password" id="admin-password" required>
-                    </div>
-                    <button type="submit" class="btn" data-i18n="login_btn">Войти</button>
-                </form>
-            </div>
-
-            <div class="admin-dashboard" id="admin-dashboard" style="display:none;">
-                <div class="admin-tabs">
-                    <button class="tab-btn active" data-tab="properties" data-i18n="tab_properties">Объекты</button>
-                    <button class="tab-btn" data-tab="users" data-i18n="tab_users">Пользователи</button>
-                    <button class="tab-btn" data-tab="leads" data-i18n="tab_leads">Заявки</button>
-                    <button class="tab-btn" data-tab="currencies" data-i18n="tab_currencies">Курсы валют</button>
-                </div>
-
-                <!-- Properties Tab -->
-                <div class="tab-content active" id="tab-properties">
-                    <h3 data-i18n="manage_properties">Управление объектами</h3>
-                    <button class="btn" id="add-property-btn" data-i18n="add_property">Добавить объект</button>
-                    <div class="admin-table-wrapper">
-                        <table class="admin-table">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th data-i18n="th_title">Название</th>
-                                    <th data-i18n="th_city">Город</th>
-                                    <th data-i18n="th_type">Тип</th>
-                                    <th data-i18n="th_price">Цена (USD)</th>
-                                    <th data-i18n="th_actions">Действия</th>
-                                </tr>
-                            </thead>
-                            <tbody id="admin-properties-body"></tbody>
-                        </table>
+        <main class="main-content">
+            <section id="home-page" class="page active">
+                <div class="hero-section">
+                    <div class="hero-overlay"></div>
+                    <div class="hero-content">
+                        <h1 data-i18n="hero.title">Ваш дом у Красного моря</h1>
+                        <p data-i18n="hero.subtitle">Лучшая недвижимость в Хургаде и Шарм-эль-Шейхе</p>
+                        <button class="btn btn-primary" onclick="navigateTo('catalog')" data-i18n="hero.btn">Смотреть объекты</button>
                     </div>
                 </div>
-
-                <!-- Users Tab -->
-                <div class="tab-content" id="tab-users">
-                    <h3 data-i18n="manage_users">Управление пользователями</h3>
-                    <div class="admin-table-wrapper">
-                        <table class="admin-table">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th data-i18n="th_name">Имя</th>
-                                    <th data-i18n="th_email">Email</th>
-                                    <th data-i18n="th_role">Роль</th>
-                                    <th data-i18n="th_actions">Действия</th>
-                                </tr>
-                            </thead>
-                            <tbody id="admin-users-body"></tbody>
-                        </table>
+                <div class="container features-section">
+                    <h2 data-i18n="features.title">Почему мы?</h2>
+                    <div class="features-grid">
+                        <div class="feature-card"><i class="fa-solid fa-check-circle"></i><h3 data-i18n="features.legal.title">Юридическая чистота</h3><p data-i18n="features.legal.desc">Полное сопровождение сделки.</p></div>
+                        <div class="feature-card"><i class="fa-solid fa-key"></i><h3 data-i18n="features.keys.title">Передача ключей</h3><p data-i18n="features.keys.desc">Помощь в заселении.</p></div>
+                        <div class="feature-card"><i class="fa-solid fa-chart-line"></i><h3 data-i18n="features.invest.title">Инвестиции</h3><p data-i18n="features.invest.desc">Высокий рост стоимости.</p></div>
                     </div>
                 </div>
+            </section>
 
-                <!-- Leads Tab -->
-                <div class="tab-content" id="tab-leads">
-                    <h3 data-i18n="manage_leads">Управление заявками</h3>
-                    <div class="admin-table-wrapper">
-                        <table class="admin-table">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th data-i18n="th_client">Клиент</th>
-                                    <th data-i18n="th_contact">Контакты</th>
-                                    <th data-i18n="th_interest">Интерес</th>
-                                    <th data-i18n="th_status">Статус</th>
-                                    <th data-i18n="th_actions">Действия</th>
-                                </tr>
-                            </thead>
-                            <tbody id="admin-leads-body"></tbody>
-                        </table>
+            <section id="catalog-page" class="page">
+                <div class="container">
+                    <div class="filters-bar">
+                        <div class="search-box"><i class="fa-solid fa-search"></i><input type="text" id="search-input" placeholder="Поиск..." data-i18n-placeholder="filters.search"></div>
+                        <select id="filter-city"><option value="" data-i18n="filters.city.all">Все города</option><option value="Hurghada">Хургада</option><option value="Sharm">Шарм-эль-Шейх</option><option value="Cairo">Каир</option></select>
+                        <select id="filter-type"><option value="" data-i18n="filters.type.all">Все типы</option><option value="Apartment">Апартаменты</option><option value="Villa">Вилла</option><option value="Townhouse">Таунхаус</option></select>
+                        <select id="filter-sort"><option value="newest" data-i18n="filters.sort.newest">Новые</option><option value="price-asc" data-i18n="filters.sort.price-asc">Цена ↑</option><option value="price-desc" data-i18n="filters.sort.price-desc">Цена ↓</option></select>
                     </div>
+                    <div id="properties-grid" class="properties-grid"></div>
                 </div>
+            </section>
 
-                <!-- Currencies Tab -->
-                <div class="tab-content" id="tab-currencies">
-                    <h3 data-i18n="manage_currencies">Курсы валют (к USD)</h3>
-                    <form id="currency-form">
-                        <div class="filter-grid">
-                            <div class="form-group">
-                                <label>EUR</label>
-                                <input type="number" step="0.01" id="rate-eur" value="0.92">
-                            </div>
-                            <div class="form-group">
-                                <label>EGP</label>
-                                <input type="number" step="0.01" id="rate-egp" value="49.50">
-                            </div>
-                            <div class="form-group">
-                                <label>RUB</label>
-                                <input type="number" step="0.01" id="rate-rub" value="92.00">
-                            </div>
-                            <div class="form-group">
-                                <label>&nbsp;</label>
-                                <button type="submit" class="btn" data-i18n="save_rates">Сохранить</button>
-                            </div>
+            <section id="admin-page" class="page">
+                <div class="container">
+                    <div id="login-form" class="auth-container">
+                        <h2 data-i18n="admin.login.title">Вход для администратора</h2>
+                        <form id="admin-login">
+                            <input type="text" id="admin-user" placeholder="Логин" required>
+                            <input type="password" id="admin-pass" placeholder="Пароль" required>
+                            <button type="submit" class="btn btn-primary" data-i18n="admin.login.btn">Войти</button>
+                        </form>
+                    </div>
+                    <div id="admin-dashboard" class="dashboard" style="display: none;">
+                        <div class="dashboard-header">
+                            <h2 data-i18n="admin.dashboard.title">Панель управления</h2>
+                            <button id="logout-btn" class="btn btn-danger" data-i18n="admin.logout">Выйти</button>
                         </div>
+                        <div class="tabs">
+                            <button class="tab-btn active" data-tab="properties" data-i18n="admin.tabs.properties">Объекты</button>
+                            <button class="tab-btn" data-tab="leads" data-i18n="admin.tabs.leads">Заявки</button>
+                            <button class="tab-btn" data-tab="rates" data-i18n="admin.tabs.rates">Курсы</button>
+                        </div>
+                        <div id="tab-properties" class="tab-content active">
+                            <button class="btn btn-success mb-2" onclick="openPropertyModal()" data-i18n="admin.props.add">Добавить</button>
+                            <div class="table-responsive"><table class="data-table"><thead><tr><th>ID</th><th>Фото</th><th>Название</th><th>Цена ($)</th><th>Действия</th></tr></thead><tbody id="admin-properties-list"></tbody></table></div>
+                        </div>
+                        <div id="tab-leads" class="tab-content"><div class="table-responsive"><table class="data-table"><thead><tr><th>Дата</th><th>Клиент</th><th>Контакты</th><th>Объект</th><th>Статус</th></tr></thead><tbody id="admin-leads-list"></tbody></table></div></div>
+                        <div id="tab-rates" class="tab-content">
+                            <form id="rates-form" class="rates-form">
+                                <div class="form-group"><label>USD</label><input type="number" step="0.01" value="1" disabled></div>
+                                <div class="form-group"><label>EUR</label><input type="number" step="0.01" id="rate-eur" required></div>
+                                <div class="form-group"><label>EGP</label><input type="number" step="0.01" id="rate-egp" required></div>
+                                <div class="form-group"><label>RUB</label><input type="number" step="0.01" id="rate-rub" required></div>
+                                <button type="submit" class="btn btn-primary" data-i18n="admin.save">Сохранить</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer"><div class="container"><p>&copy; 2023 Egypt Estate.</p></div></footer>
+    </div>
+
+    <div id="property-modal" class="modal">
+        <div class="modal-content"><span class="close-modal">&times;</span>
+            <div class="modal-body">
+                <img id="modal-img" src="" alt="">
+                <div class="modal-info">
+                    <h2 id="modal-title"></h2>
+                    <p id="modal-price" class="price-tag"></p>
+                    <p id="modal-location"><i class="fa-solid fa-location-dot"></i> <span></span></p>
+                    <p id="modal-desc"></p>
+                    <div class="modal-features"><span><i class="fa-solid fa-bed"></i> <span id="modal-beds"></span></span><span><i class="fa-solid fa-ruler-combined"></i> <span id="modal-area"></span> м²</span></div>
+                    <h3 data-i18n="modal.contact.title">Заявка</h3>
+                    <form id="lead-form" class="lead-form">
+                        <input type="hidden" id="lead-property-id">
+                        <input type="text" id="lead-name" placeholder="Имя" required>
+                        <input type="tel" id="lead-phone" placeholder="Телефон" required>
+                        <button type="submit" class="btn btn-primary" data-i18n="modal.contact.btn">Отправить</button>
                     </form>
                 </div>
-
-                <button class="btn btn-dark" id="logout-btn" data-i18n="logout_btn">Выйти</button>
             </div>
         </div>
-    </section>
+    </div>
 
-    <!-- Property Modal -->
-    <div id="property-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-modal">&times;</span>
-            <h2 id="modal-title">Добавить/Редактировать объект</h2>
+    <div id="property-editor-modal" class="modal">
+        <div class="modal-content smaller"><span class="close-modal" onclick="closePropertyModal()">&times;</span>
+            <h2 id="editor-title">Объект</h2>
             <form id="property-form">
-                <input type="hidden" id="prop-id">
-                <div class="form-group">
-                    <label data-i18n="label_title">Название</label>
-                    <input type="text" id="prop-title" required>
-                </div>
-                <div class="form-group">
-                    <label data-i18n="label_description">Описание</label>
-                    <textarea id="prop-description" rows="4" required></textarea>
-                </div>
-                <div class="form-group">
-                    <label data-i18n="label_city">Город</label>
-                    <select id="prop-city">
-                        <option value="Hurghada">Хургада</option>
-                        <option value="Sharm El Sheikh">Шарм-эль-Шейх</option>
-                        <option value="Cairo">Каир</option>
-                        <option value="El Gouna">Эль Гуна</option>
-                        <option value="Sahl Hasheesh">Сахл Хашиш</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label data-i18n="label_type">Тип</label>
-                    <select id="prop-type">
-                        <option value="apartment">Апартаменты</option>
-                        <option value="villa">Вилла</option>
-                        <option value="house">Дом</option>
-                        <option value="commercial">Коммерческая</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label data-i18n="label_price">Цена (USD)</label>
-                    <input type="number" id="prop-price" required>
-                </div>
-                <div class="form-group">
-                    <label data-i18n="label_image">URL изображения</label>
-                    <input type="url" id="prop-image" placeholder="https://..." required>
-                </div>
-                <button type="submit" class="btn" data-i18n="save_property">Сохранить</button>
+                <input type="hidden" id="edit-id">
+                <input type="text" id="edit-title" placeholder="Название" required>
+                <select id="edit-city" required><option value="Hurghada">Хургада</option><option value="Sharm">Шарм</option><option value="Cairo">Каир</option></select>
+                <select id="edit-type" required><option value="Apartment">Апартаменты</option><option value="Villa">Вилла</option><option value="Townhouse">Таунхаус</option></select>
+                <input type="number" id="edit-price" placeholder="Цена (USD)" required>
+                <input type="number" id="edit-beds" placeholder="Спален">
+                <input type="number" id="edit-area" placeholder="Площадь (м²)">
+                <input type="url" id="edit-image" placeholder="URL фото">
+                <textarea id="edit-desc" placeholder="Описание" rows="4"></textarea>
+                <button type="submit" class="btn btn-primary">Сохранить</button>
             </form>
         </div>
     </div>
 
-    <footer>
-        <p>&copy; 2024 Egypt Estate. <span data-i18n="footer_text">Все права защищены.</span></p>
-    </footer>
-
-    <button id="scrollTopBtn" title="Наверх">↑</button>
-
+    <div id="toast-container"></div>
     <script src="script.js"></script>
 </body>
 </html>
