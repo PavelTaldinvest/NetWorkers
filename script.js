@@ -1,506 +1,666 @@
-// Egypt Estate - Real Estate Website Script
+// Конфигурация API
+const API_URL = window.location.hostname === 'localhost' ? 'http://localhost:3000/api' : '/api';
 
-// === STATE & DATA ===
-let currentLang = 'ru';
-let currentTheme = 'light';
-let currentCurrency = 'USD';
-let isAdmin = false;
+// Состояние приложения
+let state = {
+    language: 'ru',
+    currency: 'USD',
+    theme: 'light',
+    token: null,
+    user: null,
+    properties: [],
+    cities: [],
+    types: [],
+    rates: { USD: 1, EUR: 0.92, EGP: 47.5, RUB: 92.5 }
+};
 
-const defaultRates = { USD: 1, EUR: 0.92, EGP: 48.5, RUB: 92 };
-let currencyRates = JSON.parse(localStorage.getItem('egyptEstate_rates')) || defaultRates;
-
-const defaultProperties = [
-    { id: 1, title: "Luxury Villa in Hurghada", city: "Hurghada", type: "Villa", price: 350000, beds: 4, area: 280, image: "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=600", description: "Stunning villa with private pool and sea view" },
-    { id: 2, title: "Sharm Beachfront Apartment", city: "Sharm", type: "Apartment", price: 180000, beds: 2, area: 95, image: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=600", description: "Modern apartment directly on the beach" },
-    { id: 3, title: "Cairo Downtown Penthouse", city: "Cairo", type: "Apartment", price: 220000, beds: 3, area: 150, image: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=600", description: "Luxury penthouse in the heart of Cairo" },
-    { id: 4, title: "Hurghada Marina Townhouse", city: "Hurghada", type: "Townhouse", price: 280000, beds: 3, area: 180, image: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600", description: "Spacious townhouse near marina" },
-    { id: 5, title: "Sharm Desert Villa", city: "Sharm", type: "Villa", price: 420000, beds: 5, area: 350, image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600", description: "Exclusive villa with mountain views" },
-    { id: 6, title: "New Cairo Compound House", city: "Cairo", type: "House", price: 310000, beds: 4, area: 220, image: "https://images.unsplash.com/photo-1580587771527-78dd89297b6f?w=600", description: "Family home in secure compound" }
-];
-
-let properties = JSON.parse(localStorage.getItem('egyptEstate_properties')) || defaultProperties;
-let leads = JSON.parse(localStorage.getItem('egyptEstate_leads')) || [];
-
-// === TRANSLATIONS ===
+// Переводы
 const translations = {
     ru: {
-        'nav.home': 'Главная', 'nav.catalog': 'Каталог', 'nav.admin': 'Админка',
-        'hero.title': 'Ваш дом у Красного моря', 'hero.subtitle': 'Лучшая недвижимость в Хургаде и Шарм-эль-Шейхе', 'hero.btn': 'Смотреть объекты',
-        'features.title': 'Почему мы?', 'features.legal.title': 'Юридическая чистота', 'features.legal.desc': 'Полное сопровождение сделки',
-        'features.keys.title': 'Передача ключей', 'features.keys.desc': 'Помощь в заселении',
-        'features.invest.title': 'Инвестиции', 'features.invest.desc': 'Высокий рост стоимости',
-        'filters.search': 'Поиск...', 'filters.city.all': 'Все города', 'filters.type.all': 'Все типы',
-        'filters.sort.newest': 'Новые', 'filters.sort.price-asc': 'Цена ↑', 'filters.sort.price-desc': 'Цена ↓',
-        'admin.login.title': 'Вход для администратора', 'admin.login.btn': 'Войти', 'admin.dashboard.title': 'Панель управления',
-        'admin.logout': 'Выйти', 'admin.tabs.properties': 'Объекты', 'admin.tabs.leads': 'Заявки', 'admin.tabs.rates': 'Курсы',
-        'admin.props.add': 'Добавить объект', 'admin.save': 'Сохранить',
-        'modal.contact.title': 'Оставить заявку', 'modal.contact.btn': 'Отправить заявку',
-        'city.Hurghada': 'Хургада', 'city.Sharm': 'Шарм-эль-Шейх', 'city.Cairo': 'Каир',
-        'type.Apartment': 'Апартаменты', 'type.Villa': 'Вилла', 'type.Townhouse': 'Таунхаус', 'type.House': 'Дом'
+        home: 'Главная',
+        catalog: 'Каталог',
+        admin: 'Админка',
+        hero_title: 'Найдите свою идеальную недвижимость в Египте',
+        hero_subtitle: 'Виллы, апартаменты и коммерческая недвижимость на побережье Красного моря',
+        browse_catalog: 'Смотреть каталог',
+        featured_properties: 'Избранные объекты',
+        all_cities: 'Все города',
+        all_types: 'Все типы',
+        search_placeholder: 'Поиск...',
+        min_price: 'Мин. цена',
+        max_price: 'Макс. цена',
+        filter: 'Фильтр',
+        admin_login: 'Вход для администраторов',
+        login: 'Войти',
+        logout: 'Выйти',
+        admin_panel: 'Панель управления',
+        total_properties: 'Объектов',
+        total_applications: 'Заявок',
+        new_applications: 'Новых',
+        total_users: 'Пользователей',
+        properties_tab: 'Объекты',
+        applications_tab: 'Заявки',
+        currencies_tab: 'Валюты',
+        add_property_tab: 'Добавить объект',
+        title: 'Название',
+        price: 'Цена ($)',
+        city: 'Город',
+        actions: 'Действия',
+        customer: 'Клиент',
+        phone: 'Телефон',
+        property: 'Объект',
+        status: 'Статус',
+        save_rates: 'Сохранить курсы',
+        add_property: 'Добавить объект',
+        request_info: 'Запросить информацию',
+        send_request: 'Отправить заявку',
+        edit: 'Ред.',
+        delete: 'Удалить',
+        view: 'Просмотр',
+        no_properties: 'Нет объектов',
+        confirm_delete: 'Вы уверены?'
     },
     en: {
-        'nav.home': 'Home', 'nav.catalog': 'Catalog', 'nav.admin': 'Admin',
-        'hero.title': 'Your Home by the Red Sea', 'hero.subtitle': 'Best properties in Hurghada and Sharm el-Sheikh', 'hero.btn': 'View Properties',
-        'features.title': 'Why Us?', 'features.legal.title': 'Legal Purity', 'features.legal.desc': 'Full transaction support',
-        'features.keys.title': 'Key Handover', 'features.keys.desc': 'Move-in assistance',
-        'features.invest.title': 'Investments', 'features.invest.desc': 'High value growth',
-        'filters.search': 'Search...', 'filters.city.all': 'All Cities', 'filters.type.all': 'All Types',
-        'filters.sort.newest': 'Newest', 'filters.sort.price-asc': 'Price ↑', 'filters.sort.price-desc': 'Price ↓',
-        'admin.login.title': 'Admin Login', 'admin.login.btn': 'Login', 'admin.dashboard.title': 'Dashboard',
-        'admin.logout': 'Logout', 'admin.tabs.properties': 'Properties', 'admin.tabs.leads': 'Leads', 'admin.tabs.rates': 'Rates',
-        'admin.props.add': 'Add Property', 'admin.save': 'Save',
-        'modal.contact.title': 'Submit Inquiry', 'modal.contact.btn': 'Send Inquiry',
-        'city.Hurghada': 'Hurghada', 'city.Sharm': 'Sharm el-Sheikh', 'city.Cairo': 'Cairo',
-        'type.Apartment': 'Apartment', 'type.Villa': 'Villa', 'type.Townhouse': 'Townhouse', 'type.House': 'House'
+        home: 'Home',
+        catalog: 'Catalog',
+        admin: 'Admin',
+        hero_title: 'Find Your Perfect Property in Egypt',
+        hero_subtitle: 'Villas, apartments and commercial real estate on the Red Sea coast',
+        browse_catalog: 'Browse Catalog',
+        featured_properties: 'Featured Properties',
+        all_cities: 'All Cities',
+        all_types: 'All Types',
+        search_placeholder: 'Search...',
+        min_price: 'Min Price',
+        max_price: 'Max Price',
+        filter: 'Filter',
+        admin_login: 'Admin Login',
+        login: 'Login',
+        logout: 'Logout',
+        admin_panel: 'Admin Panel',
+        total_properties: 'Properties',
+        total_applications: 'Applications',
+        new_applications: 'New',
+        total_users: 'Users',
+        properties_tab: 'Properties',
+        applications_tab: 'Applications',
+        currencies_tab: 'Currencies',
+        add_property_tab: 'Add Property',
+        title: 'Title',
+        price: 'Price ($)',
+        city: 'City',
+        actions: 'Actions',
+        customer: 'Customer',
+        phone: 'Phone',
+        property: 'Property',
+        status: 'Status',
+        save_rates: 'Save Rates',
+        add_property: 'Add Property',
+        request_info: 'Request Information',
+        send_request: 'Send Request',
+        edit: 'Edit',
+        delete: 'Delete',
+        view: 'View',
+        no_properties: 'No properties',
+        confirm_delete: 'Are you sure?'
     }
 };
 
-// === DOM ELEMENTS ===
-const themeToggle = document.getElementById('theme-toggle');
-const langToggle = document.getElementById('lang-toggle');
-const currencySelect = document.getElementById('currency-select');
-const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-const navLinks = document.querySelectorAll('.nav-link');
-const pages = document.querySelectorAll('.page');
-const propertiesGrid = document.getElementById('properties-grid');
-const searchInput = document.getElementById('search-input');
-const filterCity = document.getElementById('filter-city');
-const filterType = document.getElementById('filter-type');
-const filterSort = document.getElementById('filter-sort');
-const propertyModal = document.getElementById('property-modal');
-const editorModal = document.getElementById('property-editor-modal');
-const closeModalBtns = document.querySelectorAll('.close-modal');
-const adminLogin = document.getElementById('admin-login');
-const loginForm = document.getElementById('login-form');
-const adminDashboard = document.getElementById('admin-dashboard');
-const logoutBtn = document.getElementById('logout-btn');
-const tabBtns = document.querySelectorAll('.tab-btn');
-const tabContents = document.querySelectorAll('.tab-content');
-const ratesForm = document.getElementById('rates-form');
-const propertyForm = document.getElementById('property-form');
-const leadForm = document.getElementById('lead-form');
-
-// === INITIALIZATION ===
-function init() {
+// Инициализация
+document.addEventListener('DOMContentLoaded', () => {
     loadSettings();
-    applyTheme();
-    applyLanguage();
-    renderProperties();
-    setupEventListeners();
-}
+    initNavigation();
+    initThemeToggle();
+    initLanguageSelect();
+    initCurrencySelect();
+    loadProperties();
+    loadCitiesAndTypes();
+    updateTranslations();
+});
 
+// Загрузка настроек из localStorage
 function loadSettings() {
-    const savedLang = localStorage.getItem('egyptEstate_lang');
-    const savedTheme = localStorage.getItem('egyptEstate_theme');
-    const savedCurrency = localStorage.getItem('egyptEstate_currency');
-    const savedAdmin = localStorage.getItem('egyptEstate_admin');
+    const saved = localStorage.getItem('egyptEstateSettings');
+    if (saved) {
+        const settings = JSON.parse(saved);
+        state.language = settings.language || 'ru';
+        state.currency = settings.currency || 'USD';
+        state.theme = settings.theme || 'light';
+        state.token = settings.token;
+        state.user = settings.user;
+    }
     
-    if (savedLang) currentLang = savedLang;
-    if (savedTheme) currentTheme = savedTheme;
-    if (savedCurrency) currentCurrency = savedCurrency;
-    if (savedAdmin === 'true') isAdmin = true;
+    applyTheme(state.theme);
+    document.getElementById('languageSelect').value = state.language;
+    document.getElementById('currencySelect').value = state.currency;
     
-    currencySelect.value = currentCurrency;
+    if (state.token) {
+        showAdminPanel();
+    }
 }
 
-// === THEME & LANGUAGE ===
-function toggleTheme() {
-    currentTheme = currentTheme === 'light' ? 'dark' : 'light';
-    localStorage.setItem('egyptEstate_theme', currentTheme);
-    applyTheme();
+// Сохранение настроек
+function saveSettings() {
+    localStorage.setItem('egyptEstateSettings', JSON.stringify({
+        language: state.language,
+        currency: state.currency,
+        theme: state.theme,
+        token: state.token,
+        user: state.user
+    }));
 }
 
-function applyTheme() {
-    document.body.classList.toggle('dark-mode', currentTheme === 'dark');
-    themeToggle.innerHTML = currentTheme === 'dark' 
-        ? '<i class="fa-solid fa-sun"></i>' 
-        : '<i class="fa-solid fa-moon"></i>';
+// Навигация
+function initNavigation() {
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const page = link.dataset.page;
+            showPage(page);
+        });
+    });
 }
 
-function toggleLanguage() {
-    currentLang = currentLang === 'ru' ? 'en' : 'ru';
-    localStorage.setItem('egyptEstate_lang', currentLang);
-    applyLanguage();
-}
-
-function applyLanguage() {
-    langToggle.querySelector('.lang-flag').textContent = currentLang === 'ru' ? '🇷🇺' : '🇬🇧';
-    document.documentElement.lang = currentLang;
+function showPage(pageName) {
+    document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+    document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
     
-    document.querySelectorAll('[data-i18n]').forEach(el => {
-        const key = el.getAttribute('data-i18n');
-        if (translations[currentLang][key]) {
-            el.textContent = translations[currentLang][key];
+    document.getElementById(`${pageName}-page`).classList.add('active');
+    document.querySelector(`[data-page="${pageName}"]`)?.classList.add('active');
+    
+    if (pageName === 'catalog') {
+        loadProperties();
+    } else if (pageName === 'home') {
+        loadFeaturedProperties();
+    }
+}
+
+// Тема
+function initThemeToggle() {
+    const btn = document.getElementById('themeToggle');
+    btn.addEventListener('click', () => {
+        state.theme = state.theme === 'light' ? 'dark' : 'light';
+        applyTheme(state.theme);
+        saveSettings();
+    });
+}
+
+function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    const icon = document.querySelector('#themeToggle i');
+    icon.className = theme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+}
+
+// Язык
+function initLanguageSelect() {
+    document.getElementById('languageSelect').addEventListener('change', (e) => {
+        state.language = e.target.value;
+        updateTranslations();
+        saveSettings();
+        loadProperties();
+    });
+}
+
+function updateTranslations() {
+    const t = translations[state.language];
+    
+    document.querySelectorAll('[data-lang-key]').forEach(el => {
+        const key = el.dataset.langKey;
+        if (t[key]) {
+            el.textContent = t[key];
         }
     });
     
-    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-        const key = el.getAttribute('data-i18n-placeholder');
-        if (translations[currentLang][key]) {
-            el.placeholder = translations[currentLang][key];
+    document.querySelectorAll('[data-lang-placeholder]').forEach(el => {
+        const key = el.dataset.langPlaceholder;
+        if (t[key]) {
+            el.placeholder = t[key];
         }
     });
-    
-    updateCityOptions();
-    updateTypeOptions();
 }
 
-function updateCityOptions() {
-    const citySelects = [filterCity, document.getElementById('edit-city')];
-    citySelects.forEach(select => {
-        if (!select) return;
-        const currentValue = select.value;
-        select.innerHTML = `<option value="">${translations[currentLang]['filters.city.all']}</option>`;
-        [['Hurghada', 'city.Hurghada'], ['Sharm', 'city.Sharm'], ['Cairo', 'city.Cairo']].forEach(([val, key]) => {
-            select.innerHTML += `<option value="${val}">${translations[currentLang][key]}</option>`;
-        });
-        select.value = currentValue;
-    });
-}
-
-function updateTypeOptions() {
-    const typeSelects = [filterType, document.getElementById('edit-type')];
-    typeSelects.forEach(select => {
-        if (!select) return;
-        const currentValue = select.value;
-        select.innerHTML = `<option value="">${translations[currentLang]['filters.type.all']}</option>`;
-        [['Apartment', 'type.Apartment'], ['Villa', 'type.Villa'], ['Townhouse', 'type.Townhouse'], ['House', 'type.House']].forEach(([val, key]) => {
-            select.innerHTML += `<option value="${val}">${translations[currentLang][key]}</option>`;
-        });
-        select.value = currentValue;
+// Валюта
+function initCurrencySelect() {
+    document.getElementById('currencySelect').addEventListener('change', (e) => {
+        state.currency = e.target.value;
+        saveSettings();
+        loadProperties();
     });
 }
 
 function convertPrice(priceUSD) {
-    return (priceUSD * currencyRates[currentCurrency]).toFixed(0);
+    const rate = state.rates[state.currency] || 1;
+    const converted = priceUSD * rate;
+    
+    const symbols = { USD: '$', EUR: '€', EGP: '£', RUB: '₽' };
+    return `${symbols[state.currency] || state.currency} ${converted.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 }
 
-// === NAVIGATION ===
-function navigateTo(pageName) {
-    pages.forEach(page => page.classList.remove('active'));
-    navLinks.forEach(link => link.classList.remove('active'));
-    
-    document.getElementById(`${pageName}-page`).classList.add('active');
-    const activeLink = document.querySelector(`[data-page="${pageName}"]`);
-    if (activeLink) activeLink.classList.add('active');
-    
-    if (pageName === 'catalog') renderProperties();
-    if (pageName === 'admin') checkAdminStatus();
-    
-    // Close mobile menu
-    document.querySelector('.nav-menu').classList.remove('mobile-open');
+// Загрузка данных
+async function loadProperties() {
+    try {
+        const params = new URLSearchParams();
+        if (document.getElementById('cityFilter')?.value) params.append('city', document.getElementById('cityFilter').value);
+        if (document.getElementById('typeFilter')?.value) params.append('type', document.getElementById('typeFilter').value);
+        if (document.getElementById('minPrice')?.value) params.append('minPrice', document.getElementById('minPrice').value);
+        if (document.getElementById('maxPrice')?.value) params.append('maxPrice', document.getElementById('maxPrice').value);
+        if (document.getElementById('searchInput')?.value) params.append('search', document.getElementById('searchInput').value);
+        
+        const response = await fetch(`${API_URL}/properties?${params}`);
+        state.properties = await response.json();
+        
+        renderProperties(state.properties, 'propertiesGrid');
+        
+        if (document.getElementById('home-page').classList.contains('active')) {
+            loadFeaturedProperties();
+        }
+    } catch (err) {
+        console.error('Ошибка загрузки свойств:', err);
+    }
 }
 
-// === PROPERTY RENDERING ===
-function renderProperties() {
-    const searchTerm = searchInput.value.toLowerCase();
-    const cityFilter = filterCity.value;
-    const typeFilter = filterType.value;
-    const sortMode = filterSort.value;
+function loadFeaturedProperties() {
+    const featured = state.properties.slice(0, 3);
+    renderProperties(featured, 'featuredProperties');
+}
+
+function renderProperties(properties, containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
     
-    let filtered = properties.filter(p => {
-        const matchesSearch = p.title.toLowerCase().includes(searchTerm) || 
-                             p.description.toLowerCase().includes(searchTerm);
-        const matchesCity = !cityFilter || p.city === cityFilter;
-        const matchesType = !typeFilter || p.type === typeFilter;
-        return matchesSearch && matchesCity && matchesType;
-    });
-    
-    if (sortMode === 'price-asc') filtered.sort((a, b) => a.price - b.price);
-    else if (sortMode === 'price-desc') filtered.sort((a, b) => b.price - a.price);
-    else filtered.sort((a, b) => b.id - a.id);
-    
-    if (filtered.length === 0) {
-        propertiesGrid.innerHTML = `<div class="no-results">${currentLang === 'ru' ? 'Ничего не найдено' : 'No results found'}</div>`;
+    if (properties.length === 0) {
+        container.innerHTML = `<p style="text-align:center;padding:40px;">${translations[state.language].no_properties}</p>`;
         return;
     }
     
-    propertiesGrid.innerHTML = filtered.map(p => `
-        <div class="property-card" onclick="openPropertyModal(${p.id})">
-            <div class="property-image">
-                <img src="${p.image}" alt="${p.title}" onerror="this.src='https://via.placeholder.com/600x400?text=No+Image'">
-                <span class="property-badge">${translations[currentLang]['type.' + p.type] || p.type}</span>
-            </div>
-            <div class="property-info">
-                <h3>${p.title}</h3>
-                <p class="property-location"><i class="fa-solid fa-location-dot"></i> ${translations[currentLang]['city.' + p.city] || p.city}</p>
-                <div class="property-features">
-                    <span><i class="fa-solid fa-bed"></i> ${p.beds}</span>
-                    <span><i class="fa-solid fa-ruler-combined"></i> ${p.area} м²</span>
-                </div>
-                <div class="property-price">${convertPrice(p.price)} ${currentCurrency}</div>
-            </div>
-        </div>
-    `).join('');
-}
-
-// === MODALS ===
-function openPropertyModal(id) {
-    const property = properties.find(p => p.id === id);
-    if (!property) return;
-    
-    document.getElementById('modal-img').src = property.image;
-    document.getElementById('modal-img').onerror = function() { this.src = 'https://via.placeholder.com/600x400?text=No+Image'; };
-    document.getElementById('modal-title').textContent = property.title;
-    document.getElementById('modal-price').textContent = `${convertPrice(property.price)} ${currentCurrency}`;
-    document.getElementById('modal-location').querySelector('span').textContent = translations[currentLang]['city.' + property.city] || property.city;
-    document.getElementById('modal-desc').textContent = property.description;
-    document.getElementById('modal-beds').textContent = property.beds;
-    document.getElementById('modal-area').textContent = property.area;
-    document.getElementById('lead-property-id').value = property.id;
-    
-    propertyModal.classList.add('active');
-}
-
-function closePropertyModal() {
-    propertyModal.classList.remove('active');
-    editorModal.classList.remove('active');
-}
-
-function openPropertyModalEditor(id = null) {
-    const form = document.getElementById('property-form');
-    form.reset();
-    
-    if (id) {
-        const property = properties.find(p => p.id === id);
-        document.getElementById('editor-title').textContent = currentLang === 'ru' ? 'Редактировать объект' : 'Edit Property';
-        document.getElementById('edit-id').value = property.id;
-        document.getElementById('edit-title').value = property.title;
-        document.getElementById('edit-city').value = property.city;
-        document.getElementById('edit-type').value = property.type;
-        document.getElementById('edit-price').value = property.price;
-        document.getElementById('edit-beds').value = property.beds;
-        document.getElementById('edit-area').value = property.area;
-        document.getElementById('edit-image').value = property.image;
-        document.getElementById('edit-desc').value = property.description;
-    } else {
-        document.getElementById('editor-title').textContent = currentLang === 'ru' ? 'Добавить объект' : 'Add Property';
-        document.getElementById('edit-id').value = '';
-    }
-    
-    editorModal.classList.add('active');
-}
-
-// === ADMIN PANEL ===
-function checkAdminStatus() {
-    if (isAdmin) {
-        loginForm.style.display = 'none';
-        adminDashboard.style.display = 'block';
-        renderAdminProperties();
-        renderAdminLeads();
-        loadRates();
-    } else {
-        loginForm.style.display = 'block';
-        adminDashboard.style.display = 'none';
-    }
-}
-
-function login(username, password) {
-    if (username === 'admin' && password === 'admin') {
-        isAdmin = true;
-        localStorage.setItem('egyptEstate_admin', 'true');
-        checkAdminStatus();
-        showToast(currentLang === 'ru' ? 'Вход выполнен' : 'Logged in', 'success');
-    } else {
-        showToast(currentLang === 'ru' ? 'Неверные данные' : 'Invalid credentials', 'error');
-    }
-}
-
-function logout() {
-    isAdmin = false;
-    localStorage.removeItem('egyptEstate_admin');
-    checkAdminStatus();
-    showToast(currentLang === 'ru' ? 'Выход выполнен' : 'Logged out', 'success');
-}
-
-function renderAdminProperties() {
-    const tbody = document.getElementById('admin-properties-list');
-    tbody.innerHTML = properties.map(p => `
-        <tr>
-            <td>${p.id}</td>
-            <td><img src="${p.image}" style="width:50px;height:35px;object-fit:cover;border-radius:4px;" onerror="this.src='https://via.placeholder.com/50x35'"></td>
-            <td>${p.title}</td>
-            <td>$${p.price.toLocaleString()}</td>
-            <td>
-                <button class="btn-sm btn-edit" onclick="openPropertyModalEditor(${p.id})"><i class="fa-solid fa-edit"></i></button>
-                <button class="btn-sm btn-delete" onclick="deleteProperty(${p.id})"><i class="fa-solid fa-trash"></i></button>
-            </td>
-        </tr>
-    `).join('');
-}
-
-function renderAdminLeads() {
-    const tbody = document.getElementById('admin-leads-list');
-    if (leads.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5">${currentLang === 'ru' ? 'Нет заявок' : 'No leads'}</td></tr>`;
-        return;
-    }
-    tbody.innerHTML = leads.map(l => {
-        const property = properties.find(p => p.id == l.propertyId);
+    container.innerHTML = properties.map(prop => {
+        const title = state.language === 'ru' ? prop.title_ru : prop.title_en;
         return `
-            <tr>
-                <td>${new Date(l.date).toLocaleDateString()}</td>
-                <td>${l.name}</td>
-                <td>${l.phone}</td>
-                <td>${property ? property.title : 'Unknown'}</td>
-                <td><span class="status-badge">${l.status || 'New'}</span></td>
-            </tr>
+            <div class="property-card" onclick="openPropertyModal(${prop.id})">
+                <img src="${prop.image_url || 'https://via.placeholder.com/500'}" alt="${title}">
+                <div class="property-card-content">
+                    <h3 class="property-card-title">${title}</h3>
+                    <p class="property-card-price">${convertPrice(prop.price_usd)}</p>
+                    <div class="property-card-details">
+                        <span><i class="fas fa-bed"></i> ${prop.bedrooms || '-'}</span>
+                        <span><i class="fas fa-bath"></i> ${prop.bathrooms || '-'}</span>
+                        <span><i class="fas fa-ruler-combined"></i> ${prop.area_sqm || '-'} м²</span>
+                    </div>
+                </div>
+            </div>
         `;
     }).join('');
 }
 
-function deleteProperty(id) {
-    if (confirm(currentLang === 'ru' ? 'Удалить объект?' : 'Delete property?')) {
-        properties = properties.filter(p => p.id !== id);
-        localStorage.setItem('egyptEstate_properties', JSON.stringify(properties));
-        renderAdminProperties();
-        showToast(currentLang === 'ru' ? 'Удалено' : 'Deleted', 'success');
+async function loadCitiesAndTypes() {
+    try {
+        const [citiesRes, typesRes] = await Promise.all([
+            fetch(`${API_URL}/cities`),
+            fetch(`${API_URL}/types`)
+        ]);
+        
+        state.cities = await citiesRes.json();
+        state.types = await typesRes.json();
+        
+        populateSelects();
+    } catch (err) {
+        // Демо данные
+        state.cities = [
+            { id: 1, name_ru: 'Хургада', name_en: 'Hurghada' },
+            { id: 2, name_ru: 'Шарм-эль-Шейх', name_en: 'Sharm el-Sheikh' },
+            { id: 3, name_ru: 'Каир', name_en: 'Cairo' },
+            { id: 4, name_ru: 'Александрия', name_en: 'Alexandria' }
+        ];
+        state.types = [
+            { id: 1, name_ru: 'Апартаменты', name_en: 'Apartment' },
+            { id: 2, name_ru: 'Вилла', name_en: 'Villa' },
+            { id: 3, name_ru: 'Таунхаус', name_en: 'Townhouse' },
+            { id: 4, name_ru: 'Коммерческая', name_en: 'Commercial' }
+        ];
+        populateSelects();
     }
 }
 
-function saveProperty(e) {
+function populateSelects() {
+    const cityFilter = document.getElementById('cityFilter');
+    const typeFilter = document.getElementById('typeFilter');
+    const propCity = document.getElementById('propCity');
+    const propType = document.getElementById('propType');
+    
+    const getName = (item) => state.language === 'ru' ? item.name_ru : item.name_en;
+    
+    if (cityFilter) {
+        cityFilter.innerHTML = '<option value="" data-lang-key="all_cities">' + translations[state.language].all_cities + '</option>' +
+            state.cities.map(c => `<option value="${c.id}">${getName(c)}</option>`).join('');
+    }
+    
+    if (typeFilter) {
+        typeFilter.innerHTML = '<option value="" data-lang-key="all_types">' + translations[state.language].all_types + '</option>' +
+            state.types.map(t => `<option value="${t.id}">${getName(t)}</option>`).join('');
+    }
+    
+    if (propCity) {
+        propCity.innerHTML = '<option value="">Город / City</option>' +
+            state.cities.map(c => `<option value="${c.id}">${getName(c)}</option>`).join('');
+    }
+    
+    if (propType) {
+        propType.innerHTML = '<option value="">Тип / Type</option>' +
+            state.types.map(t => `<option value="${t.id}">${getName(t)}</option>`).join('');
+    }
+}
+
+function applyFilters() {
+    loadProperties();
+}
+
+// Модалка
+function openPropertyModal(id) {
+    const prop = state.properties.find(p => p.id === id);
+    if (!prop) return;
+    
+    const title = state.language === 'ru' ? prop.title_ru : prop.title_en;
+    const desc = state.language === 'ru' ? prop.description_ru : prop.description_en;
+    
+    document.getElementById('modalImage').src = prop.image_url || 'https://via.placeholder.com/500';
+    document.getElementById('modalTitle').textContent = title;
+    document.getElementById('modalPrice').textContent = convertPrice(prop.price_usd);
+    document.getElementById('modalDescription').textContent = desc || '';
+    document.getElementById('modalBedrooms').textContent = prop.bedrooms || '-';
+    document.getElementById('modalBathrooms').textContent = prop.bathrooms || '-';
+    document.getElementById('modalArea').textContent = prop.area_sqm || '-';
+    document.getElementById('modalPropertyId').value = id;
+    
+    document.getElementById('propertyModal').classList.add('active');
+}
+
+function closeModal() {
+    document.getElementById('propertyModal').classList.remove('active');
+}
+
+// Заявка
+async function submitApplication(e) {
     e.preventDefault();
-    const id = document.getElementById('edit-id').value;
-    const newProperty = {
-        id: id ? parseInt(id) : Date.now(),
-        title: document.getElementById('edit-title').value,
-        city: document.getElementById('edit-city').value,
-        type: document.getElementById('edit-type').value,
-        price: parseFloat(document.getElementById('edit-price').value),
-        beds: parseInt(document.getElementById('edit-beds').value) || 0,
-        area: parseInt(document.getElementById('edit-area').value) || 0,
-        image: document.getElementById('edit-image').value || 'https://via.placeholder.com/600x400',
-        description: document.getElementById('edit-desc').value
+    
+    const data = {
+        property_id: document.getElementById('modalPropertyId').value,
+        customer_name: document.getElementById('customerName').value,
+        customer_phone: document.getElementById('customerPhone').value,
+        customer_email: document.getElementById('customerEmail').value,
+        message: document.getElementById('customerMessage').value
     };
     
-    if (id) {
-        const index = properties.findIndex(p => p.id == id);
-        properties[index] = newProperty;
-    } else {
-        properties.push(newProperty);
+    try {
+        const response = await fetch(`${API_URL}/applications`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        
+        if (response.ok) {
+            alert(state.language === 'ru' ? 'Заявка отправлена!' : 'Request sent!');
+            closeModal();
+            e.target.reset();
+        }
+    } catch (err) {
+        console.error('Ошибка отправки заявки:', err);
+        alert(state.language === 'ru' ? 'Ошибка отправки заявки' : 'Error sending request');
     }
-    
-    localStorage.setItem('egyptEstate_properties', JSON.stringify(properties));
-    closePropertyModal();
-    renderAdminProperties();
-    showToast(currentLang === 'ru' ? 'Сохранено' : 'Saved', 'success');
 }
 
-function loadRates() {
-    document.getElementById('rate-eur').value = currencyRates.EUR;
-    document.getElementById('rate-egp').value = currencyRates.EGP;
-    document.getElementById('rate-rub').value = currencyRates.RUB;
-}
-
-function saveRates(e) {
+// Админка
+function handleLogin(e) {
     e.preventDefault();
-    currencyRates = {
+    
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    
+    fetch(`${API_URL}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.token) {
+            state.token = data.token;
+            state.user = data.user;
+            saveSettings();
+            showAdminPanel();
+            loadAdminData();
+        } else {
+            alert('Неверные учётные данные');
+        }
+    })
+    .catch(err => {
+        console.error('Ошибка входа:', err);
+        alert('Ошибка подключения к серверу');
+    });
+}
+
+function showAdminPanel() {
+    document.getElementById('loginForm').style.display = 'none';
+    document.getElementById('adminPanel').style.display = 'block';
+    loadAdminData();
+}
+
+function logout() {
+    state.token = null;
+    state.user = null;
+    saveSettings();
+    document.getElementById('loginForm').style.display = 'block';
+    document.getElementById('adminPanel').style.display = 'none';
+    document.getElementById('username').value = '';
+    document.getElementById('password').value = '';
+}
+
+function loadAdminData() {
+    loadStats();
+    loadAdminProperties();
+    loadAdminApplications();
+    loadRates();
+}
+
+async function loadStats() {
+    try {
+        const res = await fetch(`${API_URL}/admin/stats`, {
+            headers: { 'Authorization': `Bearer ${state.token}` }
+        });
+        const stats = await res.json();
+        
+        document.getElementById('statProperties').textContent = stats.totalProperties || 0;
+        document.getElementById('statApplications').textContent = stats.totalApplications || 0;
+        document.getElementById('statNewApps').textContent = stats.newApplications || 0;
+        document.getElementById('statUsers').textContent = stats.totalUsers || 0;
+    } catch (err) {
+        console.error('Ошибка загрузки статистики:', err);
+    }
+}
+
+async function loadAdminProperties() {
+    try {
+        const res = await fetch(`${API_URL}/admin/properties`, {
+            headers: { 'Authorization': `Bearer ${state.token}` }
+        });
+        const props = await res.json();
+        
+        const tbody = document.getElementById('adminPropertiesTable');
+        tbody.innerHTML = props.map(p => `
+            <tr>
+                <td>${p.id}</td>
+                <td>${state.language === 'ru' ? p.title_ru : p.title_en}</td>
+                <td>$${p.price_usd.toLocaleString()}</td>
+                <td>${getCityName(p.city_id)}</td>
+                <td>
+                    <button class="btn btn-sm btn-danger" onclick="deleteProperty(${p.id})">${translations[state.language].delete}</button>
+                </td>
+            </tr>
+        `).join('');
+    } catch (err) {
+        console.error('Ошибка загрузки свойств:', err);
+    }
+}
+
+async function loadAdminApplications() {
+    try {
+        const res = await fetch(`${API_URL}/admin/applications`, {
+            headers: { 'Authorization': `Bearer ${state.token}` }
+        });
+        const apps = await res.json();
+        
+        const tbody = document.getElementById('adminApplicationsTable');
+        tbody.innerHTML = apps.map(a => `
+            <tr>
+                <td>${a.id}</td>
+                <td>${a.customer_name}</td>
+                <td>${a.customer_phone}</td>
+                <td>${a.title_ru || a.title_en || '-'}</td>
+                <td>${a.status}</td>
+                <td>
+                    <select onchange="updateAppStatus(${a.id}, this.value)" style="padding:5px;">
+                        <option value="new" ${a.status === 'new' ? 'selected' : ''}>New</option>
+                        <option value="contacted" ${a.status === 'contacted' ? 'selected' : ''}>Contacted</option>
+                        <option value="completed" ${a.status === 'completed' ? 'selected' : ''}>Completed</option>
+                    </select>
+                </td>
+            </tr>
+        `).join('');
+    } catch (err) {
+        console.error('Ошибка загрузки заявок:', err);
+    }
+}
+
+async function updateAppStatus(id, status) {
+    try {
+        await fetch(`${API_URL}/admin/applications/${id}`, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${state.token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ status })
+        });
+        loadAdminApplications();
+    } catch (err) {
+        console.error('Ошибка обновления статуса:', err);
+    }
+}
+
+async function loadRates() {
+    try {
+        const res = await fetch(`${API_URL}/rates`);
+        state.rates = await res.json();
+        
+        document.getElementById('rateEUR').value = state.rates.EUR || 0.92;
+        document.getElementById('rateEGP').value = state.rates.EGP || 47.5;
+        document.getElementById('rateRUB').value = state.rates.RUB || 92.5;
+    } catch (err) {
+        console.error('Ошибка загрузки курсов:', err);
+    }
+}
+
+function updateRates(e) {
+    e.preventDefault();
+    
+    const rates = {
         USD: 1,
-        EUR: parseFloat(document.getElementById('rate-eur').value),
-        EGP: parseFloat(document.getElementById('rate-egp').value),
-        RUB: parseFloat(document.getElementById('rate-rub').value)
+        EUR: parseFloat(document.getElementById('rateEUR').value),
+        EGP: parseFloat(document.getElementById('rateEGP').value),
+        RUB: parseFloat(document.getElementById('rateRUB').value)
     };
-    localStorage.setItem('egyptEstate_rates', JSON.stringify(currencyRates));
-    showToast(currentLang === 'ru' ? 'Курсы сохранены' : 'Rates saved', 'success');
-    renderProperties();
+    
+    fetch(`${API_URL}/admin/rates`, {
+        method: 'PUT',
+        headers: {
+            'Authorization': `Bearer ${state.token}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(rates)
+    })
+    .then(res => res.json())
+    .then(() => {
+        state.rates = rates;
+        alert('Курсы обновлены!');
+        loadProperties();
+    })
+    .catch(err => {
+        console.error('Ошибка обновления курсов:', err);
+        alert('Ошибка обновления курсов');
+    });
 }
 
-// === LEADS ===
-function submitLead(e) {
+function showAdminTab(tabName) {
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    
+    event.target.classList.add('active');
+    document.getElementById(`tab-${tabName}`).classList.add('active');
+}
+
+async function addProperty(e) {
     e.preventDefault();
-    const newLead = {
-        id: Date.now(),
-        date: new Date().toISOString(),
-        name: document.getElementById('lead-name').value,
-        phone: document.getElementById('lead-phone').value,
-        propertyId: document.getElementById('lead-property-id').value,
-        status: 'New'
+    
+    const data = {
+        title_ru: document.getElementById('propTitleRu').value,
+        title_en: document.getElementById('propTitleEn').value,
+        description_ru: document.getElementById('propDescRu').value,
+        description_en: document.getElementById('propDescEn').value,
+        price_usd: parseFloat(document.getElementById('propPrice').value),
+        city_id: parseInt(document.getElementById('propCity').value),
+        type_id: parseInt(document.getElementById('propType').value),
+        bedrooms: parseInt(document.getElementById('propBedrooms').value) || 0,
+        bathrooms: parseInt(document.getElementById('propBathrooms').value) || 0,
+        area_sqm: parseFloat(document.getElementById('propArea').value) || 0,
+        image_url: document.getElementById('propImage').value || 'https://via.placeholder.com/500'
     };
     
-    leads.push(newLead);
-    localStorage.setItem('egyptEstate_leads', JSON.stringify(leads));
-    
-    closePropertyModal();
-    showToast(currentLang === 'ru' ? 'Заявка отправлена!' : 'Inquiry sent!', 'success');
-    renderAdminLeads();
-}
-
-// === EVENT LISTENERS ===
-function setupEventListeners() {
-    themeToggle.addEventListener('click', toggleTheme);
-    langToggle.addEventListener('click', toggleLanguage);
-    currencySelect.addEventListener('change', (e) => {
-        currentCurrency = e.target.value;
-        localStorage.setItem('egyptEstate_currency', currentCurrency);
-        renderProperties();
-    });
-    
-    mobileMenuBtn.addEventListener('click', () => {
-        document.querySelector('.nav-menu').classList.toggle('mobile-open');
-    });
-    
-    navLinks.forEach(link => {
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            navigateTo(link.dataset.page);
+    try {
+        const res = await fetch(`${API_URL}/admin/properties`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${state.token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
         });
-    });
+        
+        if (res.ok) {
+            alert('Объект добавлен!');
+            e.target.reset();
+            loadAdminProperties();
+            loadStats();
+        }
+    } catch (err) {
+        console.error('Ошибка добавления объекта:', err);
+        alert('Ошибка добавления объекта');
+    }
+}
+
+async function deleteProperty(id) {
+    if (!confirm(translations[state.language].confirm_delete)) return;
     
-    searchInput.addEventListener('input', renderProperties);
-    filterCity.addEventListener('change', renderProperties);
-    filterType.addEventListener('change', renderProperties);
-    filterSort.addEventListener('change', renderProperties);
-    
-    closeModalBtns.forEach(btn => {
-        btn.addEventListener('click', closePropertyModal);
-    });
-    
-    window.addEventListener('click', (e) => {
-        if (e.target === propertyModal) closePropertyModal();
-        if (e.target === editorModal) closePropertyModal();
-    });
-    
-    adminLogin.addEventListener('submit', (e) => {
-        e.preventDefault();
-        login(document.getElementById('admin-user').value, document.getElementById('admin-pass').value);
-    });
-    
-    logoutBtn.addEventListener('click', logout);
-    
-    tabBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            tabBtns.forEach(b => b.classList.remove('active'));
-            tabContents.forEach(c => c.classList.remove('active'));
-            btn.classList.add('active');
-            document.getElementById(`tab-${btn.dataset.tab}`).classList.add('active');
+    try {
+        await fetch(`${API_URL}/admin/properties/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${state.token}` }
         });
-    });
-    
-    ratesForm.addEventListener('submit', saveRates);
-    propertyForm.addEventListener('submit', saveProperty);
-    leadForm.addEventListener('submit', submitLead);
-    
-    // Global function for inline handlers
-    window.navigateTo = navigateTo;
-    window.openPropertyModal = openPropertyModal;
-    window.closePropertyModal = closePropertyModal;
-    window.openPropertyModalEditor = openPropertyModalEditor;
-    window.deleteProperty = deleteProperty;
+        
+        loadAdminProperties();
+        loadStats();
+    } catch (err) {
+        console.error('Ошибка удаления:', err);
+    }
 }
 
-// === UTILITIES ===
-function showToast(message, type = 'info') {
-    const container = document.getElementById('toast-container');
-    const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
-    toast.textContent = message;
-    container.appendChild(toast);
-    
-    setTimeout(() => {
-        toast.classList.add('fade-out');
-        setTimeout(() => toast.remove(), 300);
-    }, 3000);
+function getCityName(cityId) {
+    const city = state.cities.find(c => c.id === cityId);
+    return city ? (state.language === 'ru' ? city.name_ru : city.name_en) : '-';
 }
 
-// Start the app
-document.addEventListener('DOMContentLoaded', init);
+// Закрытие модалки по клику вне
+window.onclick = function(event) {
+    const modal = document.getElementById('propertyModal');
+    if (event.target === modal) {
+        closeModal();
+    }
+}
