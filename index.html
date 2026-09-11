@@ -3,21 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="NetWorkers - профессиональная разработка и дизайн">
-    <title>NetWorkers | Цифровые решения</title>
+    <meta name="description" content="Egypt Estate - Недвижимость в Египте">
+    <title>Egypt Estate | Недвижимость в Египте</title>
     
-    <link rel="icon" type="image/jpeg" href="favicon.jpg"> 
+    <link rel="icon" type="image/png" href="favicon.png"> 
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <header>
-        <div class="logo">NetWorkers</div>
+        <div class="logo">🏠 Egypt Estate</div>
         <nav>
             <ul>
-                <li><a href="#home">Главная</a></li>
-                <li><a href="#gallery">Галерея</a></li>
-                <li><a href="#contact">Контакты</a></li>
+                <li><a href="#home" data-i18n="nav_home">Главная</a></li>
+                <li><a href="#properties" data-i18n="nav_properties">Недвижимость</a></li>
+                <li><a href="#contact" data-i18n="nav_contact">Контакты</a></li>
+                <li><a href="#admin" data-i18n="nav_admin">Админ</a></li>
+                <li>
+                    <select id="currency-select" aria-label="Выбрать валюту">
+                        <option value="USD">$ USD</option>
+                        <option value="EUR">€ EUR</option>
+                        <option value="EGP">£ EGP</option>
+                        <option value="RUB">₽ RUB</option>
+                    </select>
+                </li>
+                <li>
+                    <select id="lang-select" aria-label="Выбрать язык">
+                        <option value="ru">🇷🇺 RU</option>
+                        <option value="en">🇬🇧 EN</option>
+                    </select>
+                </li>
                 <li>
                     <button id="theme-toggle" aria-label="Переключить тему">🌙</button>
                 </li>
@@ -27,120 +42,321 @@
 
     <section id="home" class="hero">
         <div class="hero-content reveal">
-            <h1>Инновации с NetWorkers</h1>
-            <p>Мы создаем цифровые решения будущего.</p>
-            <a href="#contact" class="btn">Связаться со мной</a>
+            <h1 data-i18n="hero_title">Недвижимость в Египте</h1>
+            <p data-i18n="hero_subtitle">Найдите свой идеальный дом на побережье Красного моря</p>
+            <a href="#properties" class="btn" data-i18n="hero_cta">Смотреть объекты</a>
         </div>
     </section>
 
-    <section id="gallery" class="container">
-        <h2 class="reveal">Мои работы</h2>
-        <div class="gallery-grid">
-            <div class="card reveal">
-                <img src="https://placehold.co/600x400/007bff/ffffff?text=Web+Design" alt="Проект 1">
-                <div class="card-info">
-                    <h3>Дизайн сайта</h3>
-                    <p>Современные интерфейсы для бизнеса.</p>
+    <!-- Фильтры и поиск -->
+    <section id="filters" class="container bg-light">
+        <div class="filter-wrapper reveal">
+            <h2 data-i18n="filters_title">Поиск недвижимости</h2>
+            <div class="filter-grid">
+                <div class="form-group">
+                    <label for="search-input" data-i18n="search_label">Поиск по названию</label>
+                    <input type="text" id="search-input" placeholder="Введите название...">
                 </div>
-            </div>
-            <div class="card reveal">
-                <img src="https://placehold.co/600x400/ff5733/ffffff?text=Mobile+App" alt="Проект 2">
-                <div class="card-info">
-                    <h3>Мобильное приложение</h3>
-                    <p>Удобство в каждом пикселе.</p>
+                <div class="form-group">
+                    <label for="city-filter" data-i18n="city_label">Город</label>
+                    <select id="city-filter">
+                        <option value="" data-i18n="all_cities">Все города</option>
+                        <option value="Hurghada">Хургада</option>
+                        <option value="Sharm El Sheikh">Шарм-эль-Шейх</option>
+                        <option value="Cairo">Каир</option>
+                        <option value="El Gouna">Эль Гуна</option>
+                        <option value="Sahl Hasheesh">Сахл Хашиш</option>
+                    </select>
                 </div>
-            </div>
-            <div class="card reveal">
-                <img src="https://placehold.co/600x400/28a745/ffffff?text=Branding" alt="Проект 3">
-                <div class="card-info">
-                    <h3>Брендинг</h3>
-                    <p>Создание уникального стиля.</p>
+                <div class="form-group">
+                    <label for="type-filter" data-i18n="type_label">Тип недвижимости</label>
+                    <select id="type-filter">
+                        <option value="" data-i18n="all_types">Все типы</option>
+                        <option value="apartment" data-i18n="type_apartment">Апартаменты</option>
+                        <option value="villa" data-i18n="type_villa">Вилла</option>
+                        <option value="house" data-i18n="type_house">Дом</option>
+                        <option value="commercial" data-i18n="type_commercial">Коммерческая</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="price-min" data-i18n="price_min_label">Мин. цена</label>
+                    <input type="number" id="price-min" placeholder="0">
+                </div>
+                <div class="form-group">
+                    <label for="price-max" data-i18n="price_max_label">Макс. цена</label>
+                    <input type="number" id="price-max" placeholder="Любая">
+                </div>
+                <div class="form-group">
+                    <label>&nbsp;</label>
+                    <button id="apply-filters" class="btn" data-i18n="apply_filters">Применить</button>
                 </div>
             </div>
         </div>
     </section>
-<li><a href="#reviews">Отзывы</a></li>
 
-<section id="reviews" class="container">
-    <h2 class="reveal">Отзывы клиентов</h2>
-    <div class="reviews-grid">
-        <div class="review-card reveal">
-            <p class="review-text">"NetWorkers создали для нас потрясающий сайт. Профессионализм и внимание к деталям на высшем уровне!"</p>
-            <div class="review-author">
-                <strong>Александр Петров</strong>
-                <span>CEO, TechStart</span>
+    <section id="properties" class="container">
+        <h2 class="reveal" data-i18n="properties_title">Объекты недвижимости</h2>
+        <div class="gallery-grid" id="properties-grid">
+            <!-- Properties will be loaded dynamically -->
+        </div>
+    </section>
+    <!-- Reviews Section -->
+    <section id="reviews" class="container">
+        <h2 class="reveal" data-i18n="reviews_title">Отзывы клиентов</h2>
+        <div class="reviews-grid">
+            <div class="review-card reveal">
+                <p class="review-text" data-i18n="review_1_text">"Egypt Estate помогли нам найти прекрасную виллу в Хургаде. Профессионализм на высшем уровне!"</p>
+                <div class="review-author">
+                    <strong data-i18n="review_1_author">Александр Петров</strong>
+                    <span data-i18n="review_1_role">Предприниматель</span>
+                </div>
+            </div>
+            <div class="review-card reveal">
+                <p class="review-text" data-i18n="review_2_text">"Отличный сервис! Купили апартаменты в Шарм-эль-Шейхе для отдыха. Все прошло гладко."</p>
+                <div class="review-author">
+                    <strong data-i18n="review_2_author">Мария Иванова</strong>
+                    <span data-i18n="review_2_role">Дизайнер</span>
+                </div>
+            </div>
+            <div class="review-card reveal">
+                <p class="review-text" data-i18n="review_3_text">"Лучшее агентство недвижимости в Египте. Рекомендую всем!"</p>
+                <div class="review-author">
+                    <strong data-i18n="review_3_author">Дмитрий Соколов</strong>
+                    <span data-i18n="review_3_role">Инвестор</span>
+                </div>
             </div>
         </div>
-        <div class="review-card reveal">
-            <p class="review-text">"Очень довольна мобильным приложением. Интерфейс удобный, а работа выполнена точно в срок."</p>
-            <div class="review-author">
-                <strong>Мария Иванова</strong>
-                <span>Дизайнер</span>
-            </div>
-        </div>
-        <div class="review-card reveal">
-            <p class="review-text">"Лучшее решение для нашего ребрендинга. Логотип получился именно таким, как мы и мечтали."</p>
-            <div class="review-author">
-                <strong>Дмитрий Соколов</strong>
-                <span>Основатель CoffeeTime</span>
-            </div>
-        </div>
-    </div>
-</section>
-<li><a href="#faq">FAQ</a></li>
+    </section>
 
-<section id="faq" class="container bg-light">
-    <h2 class="reveal">Часто задаваемые вопросы</h2>
-    <div class="faq-container reveal">
-        
-        <div class="faq-item">
-            <button class="faq-question">Сколько времени занимает разработка сайта? <span>+</span></button>
-            <div class="faq-answer">
-                <p>В среднем создание лендинга занимает от 5 до 10 рабочих дней, в зависимости от сложности дизайна и функционала.</p>
+    <!-- FAQ Section -->
+    <section id="faq" class="container bg-light">
+        <h2 class="reveal" data-i18n="faq_title">Часто задаваемые вопросы</h2>
+        <div class="faq-container reveal">
+            
+            <div class="faq-item">
+                <button class="faq-question" data-i18n="faq_q1">Можно ли купить недвижимость иностранцу? <span>+</span></button>
+                <div class="faq-answer">
+                    <p data-i18n="faq_a1">Да, иностранцы могут покупать недвижимость в Египте с некоторыми ограничениями в приграничных зонах.</p>
+                </div>
             </div>
-        </div>
 
-        <div class="faq-item">
-            <button class="faq-question">Работаете ли вы по предоплате? <span>+</span></button>
-            <div class="faq-answer">
-                <p>Да, обычно работа делится на этапы с предоплатой 30-50% перед началом проектирования.</p>
+            <div class="faq-item">
+                <button class="faq-question" data-i18n="faq_q2">Какие дополнительные расходы при покупке? <span>+</span></button>
+                <div class="faq-answer">
+                    <p data-i18n="faq_a2">При покупке необходимо оплатить регистрационный сбор (около 4% от стоимости) и юридические услуги.</p>
+                </div>
             </div>
-        </div>
 
-        <div class="faq-item">
-            <button class="faq-question">Предоставляете ли вы поддержку после запуска? <span>+</span></button>
-            <div class="faq-answer">
-                <p>Конечно! Я обеспечиваю бесплатную техническую поддержку в течение первого месяца после запуска сайта.</p>
+            <div class="faq-item">
+                <button class="faq-question" data-i18n="faq_q3">Предоставляете ли вы помощь в получении визы? <span>+</span></button>
+                <div class="faq-answer">
+                    <p data-i18n="faq_a3">Да, мы помогаем нашим клиентам с оформлением всех необходимых документов для получения резидентской визы.</p>
+                </div>
             </div>
+
         </div>
-
-    </div>
-</section>
-
+    </section>
+    
+    <!-- Contact Section -->
     <section id="contact" class="container bg-light">
         <div class="form-wrapper reveal">
-            <h2>Напишите мне</h2>
-            <form id="contactForm" action="https://formspree.io/f/mqeealpd" method="POST">
+            <h2 data-i18n="contact_title">Оставьте заявку</h2>
+            <form id="contactForm">
                 <div class="form-group">
-                    <label for="name">Ваше имя</label>
+                    <label for="name" data-i18n="label_name">Ваше имя</label>
                     <input type="text" id="name" name="name" required placeholder="Иван Иванов">
                 </div>
                 <div class="form-group">
-                    <label for="email">Ваш Email</label>
+                    <label for="email" data-i18n="label_email">Ваш Email</label>
                     <input type="email" id="email" name="email" required placeholder="ivan@example.com">
                 </div>
                 <div class="form-group">
-                    <label for="message">Сообщение</label>
-                    <textarea id="message" name="message" rows="5" required placeholder="Расскажите о вашем проекте..."></textarea>
+                    <label for="phone" data-i18n="label_phone">Телефон</label>
+                    <input type="tel" id="phone" name="phone" placeholder="+7 (999) 000-00-00">
                 </div>
-                <button type="submit" id="submitBtn" class="btn btn-dark">Отправить сообщение</button>
+                <div class="form-group">
+                    <label for="property-interest" data-i18n="label_property">Интересующий объект</label>
+                    <select id="property-interest" name="property">
+                        <option value="" data-i18n="select_property">Выберите объект</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="message" data-i18n="label_message">Сообщение</label>
+                    <textarea id="message" name="message" rows="5" required placeholder="Расскажите о ваших предпочтениях..."></textarea>
+                </div>
+                <button type="submit" id="submitBtn" class="btn btn-dark" data-i18n="submit_btn">Отправить заявку</button>
                 <p id="form-status"></p>
             </form>
         </div>
     </section>
 
+    <!-- Admin Section -->
+    <section id="admin" class="container bg-light">
+        <div class="admin-wrapper reveal">
+            <h2 data-i18n="admin_title">Панель администратора</h2>
+            
+            <div class="admin-login" id="admin-login-panel">
+                <h3 data-i18n="admin_login">Вход для администраторов</h3>
+                <form id="adminLoginForm">
+                    <div class="form-group">
+                        <label for="admin-username" data-i18n="label_username">Логин</label>
+                        <input type="text" id="admin-username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="admin-password" data-i18n="label_password">Пароль</label>
+                        <input type="password" id="admin-password" required>
+                    </div>
+                    <button type="submit" class="btn" data-i18n="login_btn">Войти</button>
+                </form>
+            </div>
+
+            <div class="admin-dashboard" id="admin-dashboard" style="display:none;">
+                <div class="admin-tabs">
+                    <button class="tab-btn active" data-tab="properties" data-i18n="tab_properties">Объекты</button>
+                    <button class="tab-btn" data-tab="users" data-i18n="tab_users">Пользователи</button>
+                    <button class="tab-btn" data-tab="leads" data-i18n="tab_leads">Заявки</button>
+                    <button class="tab-btn" data-tab="currencies" data-i18n="tab_currencies">Курсы валют</button>
+                </div>
+
+                <!-- Properties Tab -->
+                <div class="tab-content active" id="tab-properties">
+                    <h3 data-i18n="manage_properties">Управление объектами</h3>
+                    <button class="btn" id="add-property-btn" data-i18n="add_property">Добавить объект</button>
+                    <div class="admin-table-wrapper">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th data-i18n="th_title">Название</th>
+                                    <th data-i18n="th_city">Город</th>
+                                    <th data-i18n="th_type">Тип</th>
+                                    <th data-i18n="th_price">Цена (USD)</th>
+                                    <th data-i18n="th_actions">Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-properties-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Users Tab -->
+                <div class="tab-content" id="tab-users">
+                    <h3 data-i18n="manage_users">Управление пользователями</h3>
+                    <div class="admin-table-wrapper">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th data-i18n="th_name">Имя</th>
+                                    <th data-i18n="th_email">Email</th>
+                                    <th data-i18n="th_role">Роль</th>
+                                    <th data-i18n="th_actions">Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-users-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Leads Tab -->
+                <div class="tab-content" id="tab-leads">
+                    <h3 data-i18n="manage_leads">Управление заявками</h3>
+                    <div class="admin-table-wrapper">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th data-i18n="th_client">Клиент</th>
+                                    <th data-i18n="th_contact">Контакты</th>
+                                    <th data-i18n="th_interest">Интерес</th>
+                                    <th data-i18n="th_status">Статус</th>
+                                    <th data-i18n="th_actions">Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-leads-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Currencies Tab -->
+                <div class="tab-content" id="tab-currencies">
+                    <h3 data-i18n="manage_currencies">Курсы валют (к USD)</h3>
+                    <form id="currency-form">
+                        <div class="filter-grid">
+                            <div class="form-group">
+                                <label>EUR</label>
+                                <input type="number" step="0.01" id="rate-eur" value="0.92">
+                            </div>
+                            <div class="form-group">
+                                <label>EGP</label>
+                                <input type="number" step="0.01" id="rate-egp" value="49.50">
+                            </div>
+                            <div class="form-group">
+                                <label>RUB</label>
+                                <input type="number" step="0.01" id="rate-rub" value="92.00">
+                            </div>
+                            <div class="form-group">
+                                <label>&nbsp;</label>
+                                <button type="submit" class="btn" data-i18n="save_rates">Сохранить</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <button class="btn btn-dark" id="logout-btn" data-i18n="logout_btn">Выйти</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Property Modal -->
+    <div id="property-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2 id="modal-title">Добавить/Редактировать объект</h2>
+            <form id="property-form">
+                <input type="hidden" id="prop-id">
+                <div class="form-group">
+                    <label data-i18n="label_title">Название</label>
+                    <input type="text" id="prop-title" required>
+                </div>
+                <div class="form-group">
+                    <label data-i18n="label_description">Описание</label>
+                    <textarea id="prop-description" rows="4" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label data-i18n="label_city">Город</label>
+                    <select id="prop-city">
+                        <option value="Hurghada">Хургада</option>
+                        <option value="Sharm El Sheikh">Шарм-эль-Шейх</option>
+                        <option value="Cairo">Каир</option>
+                        <option value="El Gouna">Эль Гуна</option>
+                        <option value="Sahl Hasheesh">Сахл Хашиш</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label data-i18n="label_type">Тип</label>
+                    <select id="prop-type">
+                        <option value="apartment">Апартаменты</option>
+                        <option value="villa">Вилла</option>
+                        <option value="house">Дом</option>
+                        <option value="commercial">Коммерческая</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label data-i18n="label_price">Цена (USD)</label>
+                    <input type="number" id="prop-price" required>
+                </div>
+                <div class="form-group">
+                    <label data-i18n="label_image">URL изображения</label>
+                    <input type="url" id="prop-image" placeholder="https://..." required>
+                </div>
+                <button type="submit" class="btn" data-i18n="save_property">Сохранить</button>
+            </form>
+        </div>
+    </div>
+
     <footer>
-        <p>&copy; 2024 NetWorkers. Сделано с любовью.</p>
+        <p>&copy; 2024 Egypt Estate. <span data-i18n="footer_text">Все права защищены.</span></p>
     </footer>
 
     <button id="scrollTopBtn" title="Наверх">↑</button>

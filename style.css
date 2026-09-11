@@ -3,9 +3,9 @@
     --bg-color: #f9f9f9;
     --text-color: #333;
     --card-bg: #ffffff;
-    --header-bg: #2c3e50;
+    --header-bg: #1a5f4a;
     --section-bg: #f0f4f8;
-    --accent-color: #3498db;
+    --accent-color: #27ae60;
     --shadow: 0 10px 30px rgba(0,0,0,0.08);
 }
 
@@ -13,7 +13,7 @@
     --bg-color: #121212;
     --text-color: #e0e0e0;
     --card-bg: #1e1e1e;
-    --header-bg: #000000;
+    --header-bg: #0d3d2f;
     --section-bg: #1a1a1a;
     --shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
@@ -70,21 +70,28 @@ header nav ul li a {
 
 header nav ul li a:hover { color: var(--accent-color); }
 
-#theme-toggle {
+#theme-toggle, #currency-select, #lang-select {
     background: rgba(255,255,255,0.1);
     border: none;
     padding: 5px 10px;
     border-radius: 8px;
     cursor: pointer;
     transition: 0.3s;
+    color: white;
 }
 
-#theme-toggle:hover { background: rgba(255,255,255,0.2); }
+#theme-toggle:hover, #currency-select:hover, #lang-select:hover { 
+    background: rgba(255,255,255,0.2); 
+}
+
+#currency-select option, #lang-select option {
+    color: #333;
+}
 
 /* --- Hero --- */
 .hero {
     background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), 
-                url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1920&q=80');
+                url('https://images.unsplash.com/photo-1539650116455-251d9a0d8f27?auto=format&fit=crop&w=1920&q=80');
     background-size: cover;
     background-position: center;
     height: 100vh;
@@ -93,6 +100,135 @@ header nav ul li a:hover { color: var(--accent-color); }
     align-items: center;
     text-align: center;
     color: white;
+}
+
+/* --- Filters --- */
+.filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-top: 30px;
+}
+
+/* --- Admin Styles --- */
+.admin-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.admin-login {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.admin-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.tab-btn {
+    padding: 10px 20px;
+    background: var(--card-bg);
+    border: 2px solid var(--accent-color);
+    color: var(--text-color);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.tab-btn.active, .tab-btn:hover {
+    background: var(--accent-color);
+    color: white;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.admin-table-wrapper {
+    overflow-x: auto;
+    margin-top: 20px;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--card-bg);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.admin-table th, .admin-table td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.admin-table th {
+    background: var(--accent-color);
+    color: white;
+}
+
+.admin-table tr:hover {
+    background: rgba(0,0,0,0.05);
+}
+
+.action-btn {
+    padding: 5px 10px;
+    margin-right: 5px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.btn-edit {
+    background: #3498db;
+    color: white;
+}
+
+.btn-delete {
+    background: #e74c3c;
+    color: white;
+}
+
+/* --- Modal --- */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+    background: var(--card-bg);
+    margin: 10% auto;
+    padding: 30px;
+    border-radius: 15px;
+    max-width: 600px;
+    position: relative;
+}
+
+.close-modal {
+    position: absolute;
+    right: 20px;
+    top: 15px;
+    font-size: 30px;
+    cursor: pointer;
+    color: var(--text-color);
+}
+
+.close-modal:hover {
+    color: var(--accent-color);
 }
 
 /* --- Компоненты --- */
