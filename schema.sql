@@ -112,4 +112,4 @@ INSERT INTO currency_rates (code, rate) VALUES
 -- Администратор (пароль 'admin' должен быть захеширован в реальном приложении)
 -- Для примера вставляем просто заглушку, хеш нужно генерировать на бэкенде
 INSERT INTO users (username, password_hash, email, full_name, role) VALUES 
-('admin', '$2b$10$YourHashedPasswordHere', 'admin@egyptestate.com', 'Главный Администратор', 'admin');
+('admin', '$2b$10$12345', 'admin@egyptestate.com', 'Главный Администратор', 'admin');

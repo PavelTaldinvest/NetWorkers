@@ -132,97 +132,30 @@
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="admin-tabs">
-                        <button class="tab-btn active" onclick="showAdminTab('properties')" data-lang-key="properties_tab">Объекты</button>
-                        <button class="tab-btn" onclick="showAdminTab('applications')" data-lang-key="applications_tab">Заявки</button>
-                        <button class="tab-btn" onclick="showAdminTab('currencies')" data-lang-key="currencies_tab">Валюты</button>
-                        <button class="tab-btn" onclick="showAdminTab('addProperty')" data-lang-key="add_property_tab">Добавить объект</button>
-                    </div>
-                    
-                    <div id="tab-properties" class="tab-content active">
-                        <table class="admin-table">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th data-lang-key="title">Название</th>
-                                    <th data-lang-key="price">Цена ($)</th>
-                                    <th data-lang-key="city">Город</th>
-                                    <th data-lang-key="actions">Действия</th>
-                                </tr>
-                            </thead>
-                            <tbody id="adminPropertiesTable"></tbody>
-                        </table>
-                    </div>
-                    
-                    <div id="tab-applications" class="tab-content">
-                        <table class="admin-table">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th data-lang-key="customer">Клиент</th>
-                                    <th data-lang-key="phone">Телефон</th>
-                                    <th data-lang-key="property">Объект</th>
-                                    <th data-lang-key="status">Статус</th>
-                                    <th data-lang-key="actions">Действия</th>
-                                </tr>
-                            </thead>
-                            <tbody id="adminApplicationsTable"></tbody>
-                        </table>
-                    </div>
-                    
-                    <div id="tab-currencies" class="tab-content">
-                        <form onsubmit="updateRates(event)" class="rates-form">
-                            <div class="rate-inputs">
-                                <div>
-                                    <label>USD</label>
-                                    <input type="number" step="0.0001" id="rateUSD" value="1" readonly>
-                                </div>
-                                <div>
-                                    <label>EUR</label>
-                                    <input type="number" step="0.0001" id="rateEUR" value="0.92">
-                                </div>
-                                <div>
-                                    <label>EGP</label>
-                                    <input type="number" step="0.0001" id="rateEGP" value="47.5">
-                                </div>
-                                <div>
-                                    <label>RUB</label>
-                                    <input type="number" step="0.0001" id="rateRUB" value="92.5">
-                                </div>
-                            </div>
-                            <button type="submit" class="btn btn-primary" data-lang-key="save_rates">Сохранить курсы</button>
-                        </form>
-                    </div>
-                    
-                    <div id="tab-addProperty" class="tab-content">
-                        <form onsubmit="addProperty(event)" class="add-property-form">
-                            <div class="form-row">
-                                <input type="text" id="propTitleRu" placeholder="Название (RU)" required>
-                                <input type="text" id="propTitleEn" placeholder="Title (EN)" required>
-                            </div>
-                            <div class="form-row">
-                                <textarea id="propDescRu" placeholder="Описание (RU)" rows="3"></textarea>
-                                <textarea id="propDescEn" placeholder="Description (EN)" rows="3"></textarea>
-                            </div>
-                            <div class="form-row">
-                                <input type="number" id="propPrice" placeholder="Цена (USD)" required>
-                                <select id="propCity" required>
-                                    <option value="">Город / City</option>
-                                </select>
-                                <select id="propType" required>
-                                    <option value="">Тип / Type</option>
-                                </select>
-                            </div>
-                            <div class="form-row">
-                                <input type="number" id="propBedrooms" placeholder="Спален">
-                                <input type="number" id="propBathrooms" placeholder="Ванных">
-                                <input type="number" id="propArea" placeholder="Площадь (м²)">
-                            </div>
-                            <input type="url" id="propImage" placeholder="URL изображения">
-                            <button type="submit" class="btn btn-primary" data-lang-key="add_property">Добавить объект</button>
-                        </form>
-                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer"><div class="container"><p>&copy; 2023 Egypt Estate.</p></div></footer>
+    </div>
+
+    <div id="property-modal" class="modal">
+        <div class="modal-content"><span class="close-modal">&times;</span>
+            <div class="modal-body">
+                <img id="modal-img" src="" alt="">
+                <div class="modal-info">
+                    <h2 id="modal-title"></h2>
+                    <p id="modal-price" class="price-tag"></p>
+                    <p id="modal-location"><i class="fa-solid fa-location-dot"></i> <span></span></p>
+                    <p id="modal-desc"></p>
+                    <div class="modal-features"><span><i class="fa-solid fa-bed"></i> <span id="modal-beds"></span></span><span><i class="fa-solid fa-ruler-combined"></i> <span id="modal-area"></span> м²</span></div>
+                    <h3 data-i18n="modal.contact.title">Заявка</h3>
+                    <form id="lead-form" class="lead-form">
+                        <input type="hidden" id="lead-property-id">
+                        <input type="text" id="lead-name" placeholder="Имя" required>
+                        <input type="tel" id="lead-phone" placeholder="Телефон" required>
+                        <button type="submit" class="btn btn-primary" data-i18n="modal.contact.btn">Отправить</button>
+                    </form>
                 </div>
             </div>
         </section>
