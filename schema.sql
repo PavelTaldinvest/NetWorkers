@@ -109,7 +109,17 @@ INSERT INTO currency_rates (code, rate) VALUES
 ('EGP', 47.50),
 ('RUB', 92.50);
 
--- Администратор (пароль 'admin' должен быть захеширован в реальном приложении)
--- Для примера вставляем просто заглушку, хеш нужно генерировать на бэкенде
-INSERT INTO users (username, password_hash, email, full_name, role) VALUES 
-('admin', '$2b$10$pko1lzTJrS2Wh.9ewyAnx.wtnTkmV6yx/yQezAOpbre/l93uOv2yy', 'admin@egyptestate.com', 'Главный Администратор', 'admin');
+-- Администратор: пароль хранится ТОЛЬКО как bcrypt-хеш.
+-- Смена пароля: node scripts/update-admin-password.js "НОВЫЙ_ПАРОЛЬ"
+INSERT INTO users (username, password_hash, email, full_name, role) VALUES
+('admin', '$2b$10$A1RmSxswgvDMFIjR0/OOiO0AXFsxK1Mc9VLBXaOSVcIVYWYhjpXKi', 'admin@egyptestate.com', 'Главный Администратор', 'admin')
+ON CONFLICT (username) DO NOTHING;
+
+-- Демо-объекты для каталога (замените реальными данными перед продакшеном)
+INSERT INTO properties (title_ru, title_en, description_ru, description_en, price_usd, city_id, type_id, bedrooms, bathrooms, area_sqm, image_url, is_featured, status) VALUES
+('2-комн. апартаменты с видом на море', '2-Bed Apartment with Sea View', 'Просторные апартаменты в центре Хургады, 5 минут до пляжа. Свежий ремонт, полная мебель.', 'Spacious apartment in central Hurghada, 5 min to the beach. Fresh renovation, fully furnished.', 85000, 1, 1, 2, 1, 95, '/favicon.png', true, 'active'),
+('Вилла с бассейном в Эль-Гуне', 'Villa with Pool in El Gouna', 'Двухэтажная вилла с собственным бассейном и садом. Тихий район, 10 минут до marina.', 'Two-story villa with private pool and garden. Quiet neighborhood, 10 min to marina.', 240000, 1, 2, 4, 3, 280, '/favicon.png', true, 'active'),
+('Студия в Шарм-эль-Шейхе', 'Studio in Sharm el-Sheikh', 'Уютная студия в комплексе с бассейном рядом с Naama Bay. Отличный вариант под аренду или отдых.', 'Cozy studio in a complex with pool near Naama Bay. Great for rental or vacation.', 48000, 2, 1, 1, 1, 42, '/favicon.png', false, 'active'),
+('3-комн. пентхаус в Новом Каире', '3-Bed Penthouse in New Cairo', 'Элитный пентхаус с террасой 60 м² и панорамным видом. Закрытый клуб, охрана 24/7.', 'Elite penthouse with 60 m² terrace and panoramic view. Private club, 24/7 security.', 310000, 3, 1, 3, 3, 210, '/favicon.png', true, 'active'),
+('Таунхаус у моря, Александрия', 'Seaside Townhouse, Alexandria', 'Семейный таунхаус в историческом районе Александрии, 3 уровня, гараж, вид на Средиземное море.', 'Family townhouse in historic Alexandria district, 3 levels, garage, Mediterranean view.', 165000, 4, 3, 3, 2, 180, '/favicon.png', false, 'active'),
+('Коммерческое помещение на первой линии', 'Prime Commercial Space', 'Готовый бизнес: помещение 120 м² на первой береговой линии, высокий трафик, договор аренды до 2030.', 'Turnkey business: 120 m² space on the first seafront line, high traffic, lease until 2030.', 195000, 2, 4, 0, 2, 120, '/favicon.png', false, 'reserved');
