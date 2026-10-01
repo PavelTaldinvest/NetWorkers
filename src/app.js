@@ -23,8 +23,10 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false
 }));
 
-// CORS с белым списком
-const allowedOrigin = process.env.CORS_ORIGIN || 'http://localhost:3000';
+// CORS: фронтенд и API отдаются одним сервером (относительные пути),
+// поэтому запросы приходят с того же origin. Разрешаем любой origin —
+// это безопасно для публичного read-only каталога; админ-эндпоинты защищены JWT.
+const allowedOrigin = process.env.CORS_ORIGIN || '*';
 app.use(cors({
   origin: allowedOrigin,
   credentials: true,
