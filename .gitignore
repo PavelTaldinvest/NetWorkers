@@ -1,1 +1,6 @@
-(empty)
+# Environment
+.env.local
+.env.*.local
+
+# Logs
+*.log
