@@ -620,3 +620,44 @@ body {
         width: 100%;
     }
 }
+
+/* ===== Дополнительные стили для доработанного фронтенда ===== */
+.property-card-city {
+    font-size: 0.85rem;
+    color: var(--text-secondary, #777);
+    margin: 4px 0;
+}
+
+.rates-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 15px;
+    flex-wrap: wrap;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.admin-table td select,
+.admin-table td input[type="text"] {
+    padding: 5px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color, #ddd);
+    background: var(--bg-color, #fff);
+    color: inherit;
+    max-width: 140px;
+}
+
+.admin-table .btn-sm {
+    margin: 2px;
+}
+
+@media (max-width: 768px) {
+    .admin-table {
+        font-size: 0.8rem;
+    }
+}
