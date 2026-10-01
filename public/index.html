@@ -5,56 +5,76 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Egypt Estate - Недвижимость в Египте</title>
     <link rel="icon" type="image/png" href="/favicon.png">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=2">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
+    <a class="skip-link" href="#mainContent" data-lang-key="skip_to_content">Перейти к содержимому</a>
+
     <header class="header">
         <div class="container header-content">
-            <div class="logo">
-                <i class="fas fa-pyramid"></i>
-                <span>Egypt Estate</span>
-            </div>
+            <a href="#" class="logo" data-page="home" aria-label="Egypt Estate — на главную">
+                <span class="logo-mark"><i class="fas fa-building-columns"></i></span>
+                <span class="logo-text">Egypt&nbsp;<b>Estate</b></span>
+            </a>
 
-            <nav class="nav">
+            <nav class="nav" aria-label="Основная навигация">
                 <a href="#" data-page="home" class="nav-link active" data-lang-key="home">Главная</a>
                 <a href="#" data-page="catalog" class="nav-link" data-lang-key="catalog">Каталог</a>
                 <a href="#" data-page="admin" class="nav-link" data-lang-key="admin">Админка</a>
             </nav>
 
             <div class="controls">
-                <button class="btn-icon" id="themeToggle" title="Сменить тему">
+                <button class="btn-icon" id="themeToggle" title="Сменить тему" aria-label="Переключить светлую/тёмную тему">
                     <i class="fas fa-moon"></i>
                 </button>
 
-                <select id="languageSelect" class="lang-select">
+                <label class="visually-hidden" for="languageSelect">Язык</label>
+                <select id="languageSelect" class="pill-select" aria-label="Язык интерфейса">
                     <option value="ru">🇷🇺 RU</option>
                     <option value="en">🇬🇧 EN</option>
                 </select>
 
-                <select id="currencySelect" class="currency-select">
+                <label class="visually-hidden" for="currencySelect">Валюта</label>
+                <select id="currencySelect" class="pill-select" aria-label="Валюта цен">
                     <option value="USD">$ USD</option>
                     <option value="EUR">€ EUR</option>
                     <option value="EGP">£ EGP</option>
                     <option value="RUB">₽ RUB</option>
                 </select>
+
+                <button class="btn btn-primary btn-sm nav-cta" onclick="showPage('catalog')" data-lang-key="browse_catalog">Смотреть каталог</button>
             </div>
         </div>
     </header>
 
-    <main class="main-content">
+    <main class="main-content" id="mainContent">
         <!-- Home Page -->
         <section id="home-page" class="page active">
             <div class="hero">
-                <div class="hero-content">
+                <div class="container hero-inner">
+                    <span class="hero-badge"><i class="fas fa-sun"></i> Hurghada · Sharm el-Sheikh · Cairo</span>
                     <h1 data-lang-key="hero_title">Найдите свою идеальную недвижимость в Египте</h1>
                     <p data-lang-key="hero_subtitle">Виллы, апартаменты и коммерческая недвижимость на побережье Красного моря</p>
-                    <button class="btn btn-primary" onclick="showPage('catalog')" data-lang-key="browse_catalog">Смотреть каталог</button>
+                    <div class="hero-actions">
+                        <button class="btn btn-primary btn-lg" onclick="showPage('catalog')" data-lang-key="browse_catalog">Смотреть каталог</button>
+                    </div>
+                    <div class="hero-stats">
+                        <div><strong>4</strong><span data-lang-key="stat_cities">города</span></div>
+                        <div><strong>4</strong><span data-lang-key="stat_types">типа объектов</span></div>
+                        <div><strong>24/7</strong><span data-lang-key="stat_online">заявка онлайн</span></div>
+                    </div>
                 </div>
             </div>
 
             <div class="container">
-                <h2 class="section-title" data-lang-key="featured_properties">Избранные объекты</h2>
+                <div class="section-head">
+                    <h2 class="section-title" data-lang-key="featured_properties">Избранные объекты</h2>
+                    <a href="#" class="link-more" onclick="event.preventDefault();showPage('catalog')"><span data-lang-key="view_all">Смотреть все</span> <i class="fas fa-arrow-right"></i></a>
+                </div>
                 <div class="properties-grid" id="featuredProperties"></div>
             </div>
         </section>
@@ -64,23 +84,31 @@
             <div class="container">
                 <h2 class="section-title" data-lang-key="catalog">Каталог недвижимости</h2>
 
-                <div class="filters">
-                    <input type="text" id="searchInput" class="filter-input" placeholder="Поиск..." data-lang-placeholder="search_placeholder">
+                <form class="filters" onsubmit="event.preventDefault(); applyFilters();" role="search">
+                    <div class="filter-field search-field">
+                        <i class="fas fa-magnifying-glass"></i>
+                        <input type="text" id="searchInput" class="filter-input" placeholder="Поиск..." data-lang-placeholder="search_placeholder" autocomplete="off">
+                    </div>
 
-                    <select id="cityFilter" class="filter-select">
+                    <select id="cityFilter" class="filter-select" aria-label="Город">
                         <option value="" data-lang-key="all_cities">Все города</option>
                     </select>
 
-                    <select id="typeFilter" class="filter-select">
+                    <select id="typeFilter" class="filter-select" aria-label="Тип объекта">
                         <option value="" data-lang-key="all_types">Все типы</option>
                     </select>
 
-                    <input type="number" id="minPrice" class="filter-input" placeholder="Мин. цена" data-lang-placeholder="min_price">
-                    <input type="number" id="maxPrice" class="filter-input" placeholder="Макс. цена" data-lang-placeholder="max_price">
+                    <div class="price-range">
+                        <input type="number" id="minPrice" class="filter-input" placeholder="Мин. цена" data-lang-placeholder="min_price" min="0">
+                        <span class="range-dash">—</span>
+                        <input type="number" id="maxPrice" class="filter-input" placeholder="Макс. цена" data-lang-placeholder="max_price" min="0">
+                    </div>
 
-                    <button class="btn btn-secondary" onclick="applyFilters()" data-lang-key="filter">Фильтр</button>
-                </div>
+                    <button type="submit" class="btn btn-primary" data-lang-key="filter">Подобрать</button>
+                    <button type="button" class="btn btn-ghost" id="resetFiltersBtn" onclick="resetFilters()" data-lang-key="reset">Сбросить</button>
+                </form>
 
+                <p class="results-count" id="resultsCount" aria-live="polite"></p>
                 <div class="properties-grid" id="propertiesGrid"></div>
             </div>
         </section>
@@ -89,11 +117,19 @@
         <section id="admin-page" class="page">
             <div class="container">
                 <div id="loginForm" class="login-form">
+                    <div class="login-icon"><i class="fas fa-lock"></i></div>
                     <h2 data-lang-key="admin_login">Вход для администраторов</h2>
                     <form onsubmit="handleLogin(event)">
-                        <input type="text" id="username" placeholder="Логин" required>
-                        <input type="password" id="password" placeholder="Пароль" required>
-                        <button type="submit" class="btn btn-primary" data-lang-key="login">Войти</button>
+                        <label class="field-label" for="username" data-lang-key="login_user">Логин</label>
+                        <input type="text" id="username" placeholder="admin" required autocomplete="username">
+                        <label class="field-label" for="password" data-lang-key="login_pass">Пароль</label>
+                        <div class="password-wrap">
+                            <input type="password" id="password" placeholder="••••••••" required autocomplete="current-password">
+                            <button type="button" class="pwd-toggle" onclick="togglePassword()" aria-label="Показать пароль" tabindex="-1">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block" id="loginBtn" data-lang-key="login">Войти</button>
                     </form>
                 </div>
 
@@ -243,36 +279,97 @@
     </main>
 
     <footer class="footer">
-        <div class="container"><p>&copy; 2026 Egypt Estate.</p></div>
+        <div class="container footer-inner">
+            <div class="footer-brand">
+                <span class="logo-mark"><i class="fas fa-building-columns"></i></span>
+                <span>Egypt Estate</span>
+            </div>
+            <p data-lang-key="footer_note">Недвижимость на побережье Красного моря — виллы, апартаменты, коммерция.</p>
+            <p class="footer-copy">&copy; 2026 Egypt Estate.</p>
+        </div>
     </footer>
 
-    <!-- Property Modal -->
-    <div id="propertyModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeModal()">&times;</span>
-            <img id="modalImage" src="" alt="">
-            <h2 id="modalTitle"></h2>
-            <p id="modalPrice" class="price"></p>
-            <p id="modalLocation"><i class="fas fa-location-dot"></i> <span id="modalCity"></span> · <span id="modalType"></span></p>
-            <p id="modalDescription"></p>
-            <div class="property-details">
-                <span><i class="fas fa-bed"></i> <span id="modalBedrooms"></span></span>
-                <span><i class="fas fa-bath"></i> <span id="modalBathrooms"></span></span>
-                <span><i class="fas fa-ruler-combined"></i> <span id="modalArea"></span> м²</span>
-            </div>
+    <!-- Toast-уведомления -->
+    <div id="toastContainer" class="toast-container" aria-live="assertive"></div>
 
-            <form class="contact-form" onsubmit="submitApplication(event)">
-                <h3 data-lang-key="request_info">Запросить информацию</h3>
-                <input type="hidden" id="modalPropertyId">
-                <input type="text" id="customerName" placeholder="Ваше имя" required>
-                <input type="tel" id="customerPhone" placeholder="Телефон" required>
-                <input type="email" id="customerEmail" placeholder="Email">
-                <textarea id="customerMessage" placeholder="Сообщение" rows="3"></textarea>
-                <button type="submit" class="btn btn-primary" data-lang-key="send_request">Отправить заявку</button>
+    <!-- Модалка редактирования объекта -->
+    <div id="editModal" class="modal">
+        <div class="modal-content modal-form">
+            <button class="close" onclick="closeEditModal()" aria-label="Закрыть">&times;</button>
+            <h2 data-lang-key="edit_property">Редактирование объекта</h2>
+            <form onsubmit="saveEditProperty(event)">
+                <input type="hidden" id="editPropId">
+                <label class="field-label" data-lang-key="title_ru">Название (RU)</label>
+                <input type="text" id="editTitleRu" required>
+                <label class="field-label">Title (EN)</label>
+                <input type="text" id="editTitleEn" required>
+                <label class="field-label" data-lang-key="desc_ru">Описание (RU)</label>
+                <textarea id="editDescRu" rows="3"></textarea>
+                <label class="field-label">Description (EN)</label>
+                <textarea id="editDescEn" rows="3"></textarea>
+                <div class="form-row">
+                    <div>
+                        <label class="field-label" data-lang-key="price">Цена ($)</label>
+                        <input type="number" id="editPrice" min="0" step="0.01" required>
+                    </div>
+                    <div>
+                        <label class="field-label" data-lang-key="status">Статус</label>
+                        <select id="editStatus">
+                            <option value="active" data-lang-key="prop_active">Активен</option>
+                            <option value="sold" data-lang-key="prop_sold">Продан</option>
+                            <option value="rented" data-lang-key="prop_rented">Аренда</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block" data-lang-key="save">Сохранить</button>
             </form>
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <!-- Подтверждение удаления -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content modal-confirm">
+            <h3 data-lang-key="confirm_title">Подтвердите действие</h3>
+            <p id="confirmText" data-lang-key="confirm_delete">Вы уверены?</p>
+            <div class="confirm-actions">
+                <button class="btn btn-ghost" onclick="closeConfirm(false)" data-lang-key="cancel">Отмена</button>
+                <button class="btn btn-danger" onclick="closeConfirm(true)" data-lang-key="delete">Удалить</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="propertyModal" class="modal">
+        <div class="modal-content modal-property">
+            <button class="close" onclick="closeModal()" aria-label="Закрыть">&times;</button>
+            <div class="modal-media">
+                <img id="modalImage" src="" alt="">
+                <span class="badge badge-status" id="modalBadge"></span>
+            </div>
+            <div class="modal-body">
+                <h2 id="modalTitle"></h2>
+                <p id="modalPrice" class="price"></p>
+                <p id="modalLocation"><i class="fas fa-location-dot"></i> <span id="modalCity"></span> · <span id="modalType"></span></p>
+                <p id="modalDescription"></p>
+                <div class="property-details">
+                    <span><i class="fas fa-bed"></i> <b id="modalBedrooms"></b> <em data-lang-key="beds">спальни</em></span>
+                    <span><i class="fas fa-bath"></i> <b id="modalBathrooms"></b> <em data-lang-key="baths">ванные</em></span>
+                    <span><i class="fas fa-ruler-combined"></i> <b id="modalArea"></b> м²</span>
+                </div>
+
+                <form class="contact-form" onsubmit="submitApplication(event)">
+                    <h3 data-lang-key="request_info">Запросить информацию</h3>
+                    <input type="hidden" id="modalPropertyId">
+                    <input type="text" id="customerName" placeholder="Ваше имя" required data-lang-placeholder="ph_name">
+                    <input type="tel" id="customerPhone" placeholder="+7 900 000-00-00" required data-lang-placeholder="ph_phone">
+                    <input type="email" id="customerEmail" placeholder="Email" data-lang-placeholder="ph_email">
+                    <textarea id="customerMessage" placeholder="Ваш вопрос по объекту…" rows="3" data-lang-placeholder="ph_message"></textarea>
+                    <button type="submit" class="btn btn-primary btn-block" data-lang-key="send_request">Отправить заявку</button>
+                    <p class="form-hint" data-lang-key="form_hint">Мы свяжемся с вами в течение рабочего дня.</p>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js?v=2"></script>
 </body>
 </html>
