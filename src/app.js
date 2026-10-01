@@ -41,7 +41,7 @@ app.use('/uploads', express.static('uploads'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  const db = require('../config/db');
+  const db = require('./config/db');
   
   db.query('SELECT NOW()')
     .then(() => {
