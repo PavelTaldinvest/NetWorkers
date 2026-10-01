@@ -63,6 +63,9 @@ const translations = {
         delete: 'Удалить',
         view: 'Просмотр',
         no_properties: 'Нет объектов',
+        loading: 'Загрузка…',
+        conn_err: 'Ошибка подключения к серверу. Проверьте интернет и попробуйте ещё раз.',
+        retry: 'Повторить',
         confirm_delete: 'Вы уверены?',
         status_new: 'Новая',
         status_contacted: 'Контакт',
@@ -129,6 +132,9 @@ const translations = {
         delete: 'Delete',
         view: 'View',
         no_properties: 'No properties',
+        loading: 'Loading…',
+        conn_err: 'Server connection error. Check your internet and try again.',
+        retry: 'Retry',
         confirm_delete: 'Are you sure?',
         status_new: 'New',
         status_contacted: 'Contacted',
@@ -332,7 +338,12 @@ function convertPrice(priceUSD) {
 }
 
 // ==================== Каталог ====================
+let _catalogRetried = false; // одна повторная попытка при «плавающем» сетевом сбое
+
 async function loadProperties() {
+    const grid = document.getElementById('propertiesGrid');
+    if (grid) grid.innerHTML = `<p style="text-align:center;padding:40px;">${t('loading')}</p>`;
+
     try {
         const params = new URLSearchParams();
         const city = document.getElementById('cityFilter')?.value;
@@ -347,11 +358,30 @@ async function loadProperties() {
         if (max) params.append('maxPrice', max);
         if (search) params.append('search', search);
 
-        state.properties = await apiFetch(`/properties?${params}`);
+        try {
+            state.properties = await apiFetch(`/properties?${params}`);
+        } catch (err) {
+            // Сетевой сбой/таймаут туннеля — один автоматический повтор
+            if (!_catalogRetried && !err.status) {
+                _catalogRetried = true;
+                await new Promise(r => setTimeout(r, 1200));
+                state.properties = await apiFetch(`/properties?${params}`);
+            } else {
+                throw err;
+            }
+        }
+        _catalogRetried = false;
         renderProperties(state.properties, 'propertiesGrid');
         loadFeaturedProperties();
     } catch (err) {
         console.error('Ошибка загрузки свойств:', err);
+        if (grid) {
+            grid.innerHTML = `
+                <div style="text-align:center;padding:40px;grid-column:1/-1;">
+                    <p>${t('conn_err')}</p>
+                    <button class="btn btn-primary" onclick="loadProperties()">${t('retry')}</button>
+                </div>`;
+        }
     }
 }
 
@@ -551,7 +581,7 @@ async function handleLogin(e) {
         }
     } catch (err) {
         console.error('Ошибка входа:', err);
-        alert(t('err_server'));
+        alert(`${t('err_server')}\n${err.message || ''}`);
     }
     document.getElementById('password').value = '';
 }
