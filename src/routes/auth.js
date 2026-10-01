@@ -48,10 +48,8 @@ router.post('/login', authLimiter, loginValidation, async (req, res, next) => {
     // Проверка пароля
     let validPassword = false;
     
-    // Для обратной совместимости с существующими данными
-    if (username === 'admin' && password === 'admin123') {
-      validPassword = true;
-    } else if (user.password_hash) {
+    
+    if (user.password_hash) {
       validPassword = await bcrypt.compare(password, user.password_hash);
     }
 
