@@ -35,7 +35,18 @@ router.post('/login', authLimiter, loginValidation, async (req, res, next) => {
 
     const { username, password } = req.body;
 
-    const result = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
+    let result;
+    try {
+      result = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
+    } catch (dbError) {
+      // База недоступна — это НЕ проблема пароля. 503 вместо 401,
+      // чтобы фронтенд не показывал «неверные учётные данные».
+      console.error('Ошибка БД при входе:', dbError.message);
+      return res.status(503).json({
+        success: false,
+        error: { message: 'Сервер базы данных недоступен. Проверьте PostgreSQL и настройки .env' }
+      });
+    }
     const user = result.rows[0];
 
     if (!user) {
@@ -62,7 +73,7 @@ router.post('/login', authLimiter, loginValidation, async (req, res, next) => {
 
     const token = jwt.sign(
       { id: user.id, username: user.username, role: user.role },
-      process.env.JWT_SECRET || 'default-secret-change-me',
+      process.env.JWT_SECRET || 'default-secret', // та же константа, что в middleware/auth.js — иначе токен не пройдёт проверку
       { expiresIn: '24h' }
     );
 

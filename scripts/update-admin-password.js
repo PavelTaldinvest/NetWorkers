@@ -1,7 +1,7 @@
 // Скрипт обновления хеша пароля администратора в рабочей БД.
 // Использование: DB_PASSWORD=... node scripts/update-admin-password.js "НовыйПароль"
 const bcrypt = require('bcryptjs');
-require('dotenv').config();
+require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
 const { Pool } = require('pg');
 
 const pool = new Pool({
