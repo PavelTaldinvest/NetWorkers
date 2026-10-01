@@ -374,7 +374,7 @@ function renderProperties(properties, containerId) {
         const city = state.language === 'ru' ? prop.city_name_ru : prop.city_name_en;
         return `
             <div class="property-card" onclick="openPropertyModal(${prop.id})">
-                <img src="${escapeHtml(prop.image_url || 'https://via.placeholder.com/500')}" alt="${escapeHtml(title)}">
+                <img src="${escapeHtml(prop.image_url || '/favicon.png')}" alt="${escapeHtml(title)}">
                 <div class="property-card-content">
                     <h3 class="property-card-title">${escapeHtml(title)}</h3>
                     <p class="property-card-price">${convertPrice(prop.price_usd)}</p>
@@ -451,14 +451,25 @@ function applyFilters() {
 }
 
 // ==================== Модалка объекта ====================
-function openPropertyModal(id) {
-    const prop = state.properties.find(p => p.id === id);
+async function openPropertyModal(id) {
+    let prop = state.properties.find(p => p.id === id);
+
+    // Если объекта нет в текущем списке (например, открыт из админки или
+    // отфильтрован) — догружаем его с сервера: GET /api/properties/:id
+    if (!prop) {
+        try {
+            prop = await apiFetch(`/properties/${id}`);
+        } catch (err) {
+            console.warn(`Не удалось загрузить объект ${id}:`, err.message);
+            return;
+        }
+    }
     if (!prop) return;
 
     const title = state.language === 'ru' ? prop.title_ru : prop.title_en;
     const desc = state.language === 'ru' ? prop.description_ru : prop.description_en;
 
-    document.getElementById('modalImage').src = prop.image_url || 'https://via.placeholder.com/500';
+    document.getElementById('modalImage').src = prop.image_url || '/favicon.png';
     document.getElementById('modalTitle').textContent = title || '';
     document.getElementById('modalPrice').textContent = convertPrice(prop.price_usd);
     document.getElementById('modalCity').textContent = (state.language === 'ru' ? prop.city_name_ru : prop.city_name_en) || '-';
@@ -634,21 +645,34 @@ async function loadAdminProperties() {
     }
 }
 
-// Быстрое редактирование цены через prompt (использует PUT /admin/properties/:id)
+// Быстрое редактирование объекта (цена + названия) — PUT /admin/properties/:id
 async function startEditProperty(id) {
     const props = await getCachedAdminProperties();
     const p = props.find(x => x.id === id);
     if (!p) return;
+
+    const titleRu = prompt('Название (RU):', p.title_ru || '');
+    if (titleRu === null) return;
+    const titleEn = prompt('Название (EN):', p.title_en || '');
+    if (titleEn === null) return;
     const input = prompt(`${t('price')} ($) [ID ${id}]:`, p.price_usd);
     if (input === null) return;
+
     const price = parseFloat(input);
-    if (isNaN(price) || price < 0) { alert(t('fill_required')); return; }
+    const payload = { price_usd: price };
+    if (titleRu.trim()) payload.title_ru = titleRu.trim();
+    if (titleEn.trim()) payload.title_en = titleEn.trim();
+
+    if (isNaN(price) || price < 0 || (!payload.title_ru && !payload.title_en)) {
+        alert(t('fill_required'));
+        return;
+    }
 
     try {
         await apiFetch(`/admin/properties/${id}`, {
             method: 'PUT',
             headers: authHeaders({ 'Content-Type': 'application/json' }),
-            body: JSON.stringify({ price_usd: price })
+            body: JSON.stringify(payload)
         });
         alert(t('prop_updated'));
         invalidateAdminCache();
@@ -779,24 +803,29 @@ async function loadRates() {
     loadFeaturedProperties();
 }
 
-// Ручное сохранение курсов: на бэкенде есть только POST /api/rates/refresh
-// (обновление из внешнего источника), поэтому «Сохранить» синхронизирует
-// состояние с серверными курсами через refresh.
+// Ручное сохранение курсов — PUT /api/rates/:code на бэкенде
 async function saveRates(e) {
     e.preventDefault();
+    const values = { EUR: parseFloat(document.getElementById('rateEUR').value),
+                     EGP: parseFloat(document.getElementById('rateEGP').value),
+                     RUB: parseFloat(document.getElementById('rateRUB').value) };
+
     try {
-        const data = await apiFetch('/rates/refresh', { method: 'POST', headers: authHeaders() });
-        if (data && typeof data === 'object') state.rates = { USD: 1, ...data };
-        document.getElementById('rateEUR').value = state.rates.EUR ?? 0.92;
-        document.getElementById('rateEGP').value = state.rates.EGP ?? 47.5;
-        document.getElementById('rateRUB').value = state.rates.RUB ?? 92.5;
+        for (const [code, rate] of Object.entries(values)) {
+            if (isNaN(rate) || rate <= 0) throw new Error(`${t('fill_required')}: ${code}`);
+            await apiFetch(`/rates/${code}`, {
+                method: 'PUT',
+                headers: authHeaders({ 'Content-Type': 'application/json' }),
+                body: JSON.stringify({ rate })
+            });
+        }
+        await loadRates();
         alert(t('rates_saved'));
     } catch (err) {
+        console.error('Ошибка сохранения курсов:', err);
         handleAuthError(err);
         alert(`${t('rates_err')}: ${err.message}`);
     }
-    renderProperties(state.properties, 'propertiesGrid');
-    loadFeaturedProperties();
 }
 
 // Обновление курсов из внешнего источника (cron-сервис на бэкенде)
@@ -836,13 +865,19 @@ async function addProperty(e) {
         bedrooms: parseInt(document.getElementById('propBedrooms').value) || 0,
         bathrooms: parseInt(document.getElementById('propBathrooms').value) || 0,
         area_sqm: parseFloat(document.getElementById('propArea').value) || 0,
-        image_url: document.getElementById('propImage').value.trim() || 'https://via.placeholder.com/500'
+        image_url: document.getElementById('propImage').value.trim() || '/favicon.png'
     };
 
     try {
         // Бэкенд ожидает multipart (upload.single('image')) — отправляем FormData
         const fd = new FormData();
         Object.entries(data).forEach(([k, v]) => fd.append(k, v));
+
+        // Если выбран файл изображения — прикладываем его (field name: image)
+        const fileInput = document.getElementById('propImageFile');
+        if (fileInput && fileInput.files && fileInput.files[0]) {
+            fd.append('image', fileInput.files[0]);
+        }
 
         const res = await fetch(`${API_URL}/admin/properties`, {
             method: 'POST',

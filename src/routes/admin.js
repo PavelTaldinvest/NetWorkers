@@ -88,10 +88,15 @@ router.patch('/applications/:id', authMiddleware, apiLimiter, async (req, res, n
     const { id } = req.params;
     const { status, admin_comment } = req.body;
 
+    // Защита от записи undefined/null поверх существующего комментария
     const result = await pool.query(
-      `UPDATE applications SET status = $1, admin_comment = $2 WHERE id = $3 RETURNING *`,
-      [status, admin_comment, id]
+      `UPDATE applications SET status = $1, admin_comment = COALESCE($2, admin_comment) WHERE id = $3 RETURNING *`,
+      [status, admin_comment ?? null, id]
     );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: { message: 'Заявка не найдена' } });
+    }
     
     res.json({ success: true, data: result.rows[0] });
   } catch (error) {
@@ -138,13 +143,16 @@ router.post('/properties', authMiddleware, upload.single('image'), propertyValid
       });
     }
 
-    const { title_ru, title_en, description_ru, description_en, price_usd, city_id, type_id, bedrooms, bathrooms, area_sqm } = req.body;
-    const image_url = req.file ? `/uploads/${req.file.filename}` : 'https://via.placeholder.com/500';
+    const { title_ru, title_en, description_ru, description_en, price_usd, city_id, type_id, bedrooms, bathrooms, area_sqm, image_url } = req.body;
+    // Приоритет: загруженный файл > переданный URL > заглушка
+    let finalImageUrl = '/favicon.png';
+    if (image_url && String(image_url).trim()) finalImageUrl = String(image_url).trim();
+    if (req.file) finalImageUrl = `/uploads/${req.file.filename}`;
 
     const result = await pool.query(
       `INSERT INTO properties (title_ru, title_en, description_ru, description_en, price_usd, city_id, type_id, bedrooms, bathrooms, area_sqm, image_url)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
-      [title_ru, title_en, description_ru, description_en, price_usd, city_id, type_id, bedrooms, bathrooms, area_sqm, image_url]
+      [title_ru, title_en, description_ru, description_en, price_usd, city_id, type_id, bedrooms, bathrooms, area_sqm, finalImageUrl]
     );
     
     res.status(201).json({ success: true, data: result.rows[0] });
@@ -153,8 +161,8 @@ router.post('/properties', authMiddleware, upload.single('image'), propertyValid
   }
 });
 
-// Обновить объект
-router.put('/properties/:id', authMiddleware, apiLimiter, async (req, res, next) => {
+// Обновление объекта: принимает JSON (частичное обновление) ИЛИ multipart с файлом image
+router.put('/properties/:id', authMiddleware, apiLimiter, upload.single('image'), async (req, res, next) => {
   try {
     if (req.user.role !== 'admin') {
       return res.status(403).json({
@@ -166,14 +174,38 @@ router.put('/properties/:id', authMiddleware, apiLimiter, async (req, res, next)
     const { id } = req.params;
     const data = req.body;
 
+    // Если загружен новый файл — он имеет приоритет над текстовым image_url
+    const newImageUrl = req.file ? `/uploads/${req.file.filename}` : data.image_url;
+
+    // Валидация входных данных (частичное обновление через COALESCE)
+    if (data.title_ru !== undefined && (!String(data.title_ru).trim() || String(data.title_ru).length > 200)) {
+      return res.status(400).json({ success: false, error: { message: 'Название (RU): от 1 до 200 символов' } });
+    }
+    if (data.title_en !== undefined && (!String(data.title_en).trim() || String(data.title_en).length > 200)) {
+      return res.status(400).json({ success: false, error: { message: 'Название (EN): от 1 до 200 символов' } });
+    }
+    if (data.price_usd !== undefined && (isNaN(parseFloat(data.price_usd)) || parseFloat(data.price_usd) < 0)) {
+      return res.status(400).json({ success: false, error: { message: 'Цена должна быть числом >= 0' } });
+    }
+    if (data.status !== undefined && !['active', 'sold', 'rented'].includes(data.status)) {
+      return res.status(400).json({ success: false, error: { message: "Статус: active | sold | rented" } });
+    }
+
     const result = await pool.query(
       `UPDATE properties SET
         title_ru = COALESCE($1, title_ru), title_en = COALESCE($2, title_en),
-        price_usd = COALESCE($3, price_usd), city_id = COALESCE($4, city_id),
-        type_id = COALESCE($5, type_id), status = COALESCE($6, status)
-       WHERE id = $7 RETURNING *`,
-      [data.title_ru, data.title_en, data.price_usd, data.city_id, data.type_id, data.status, id]
+        description_ru = COALESCE($3, description_ru), description_en = COALESCE($4, description_en),
+        price_usd = COALESCE($5, price_usd), city_id = COALESCE($6, city_id),
+        type_id = COALESCE($7, type_id), status = COALESCE($8, status),
+        image_url = COALESCE($9, image_url), updated_at = CURRENT_TIMESTAMP
+       WHERE id = $10 RETURNING *`,
+      [data.title_ru, data.title_en, data.description_ru, data.description_en,
+       data.price_usd, data.city_id, data.type_id, data.status, newImageUrl || null, id]
     );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: { message: 'Объект не найден' } });
+    }
     
     res.json({ success: true, data: result.rows[0] });
   } catch (error) {

@@ -35,8 +35,8 @@ app.use(cors({
 app.use(express.json());
 app.use(morgan('dev')); // Логирование запросов
 
-// Статика
-app.use(express.static('.'));
+// Статика (фронтенд) — только папка public, чтобы не отдавать .env / src / node_modules
+app.use(express.static(path.join(__dirname, '..', 'public')));
 app.use('/uploads', express.static('uploads'));
 
 // Health check endpoint
