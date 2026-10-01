@@ -174,7 +174,9 @@ async function apiFetch(path, options = {}) {
         const msg = (body && body.error && (body.error.details
             ? body.error.details.map(d => d.msg).join('; ')
             : body.error.message)) || `HTTP ${res.status}`;
-        throw new Error(msg);
+        const err = new Error(msg);
+        err.status = res.status; // чтобы logout() не вызывался рекурсивно из validateToken()
+        throw err;
     }
     // Некоторые эндпоинты возвращают массив напрямую (cities/types), другие — {success, data}
     if (Array.isArray(body)) return body;
@@ -226,7 +228,15 @@ function loadSettings() {
     document.getElementById('currencySelect').value = state.currency;
 
     if (state.token) {
-        showAdminPanel();
+        // Проверяем токен на сервере: если он недействителен (сменился JWT_SECRET,
+        // истёк срок или сервер перезапускали) — остаёмся на форме входа.
+        validateToken().then((valid) => {
+            if (valid) {
+                showAdminPanel();
+            } else {
+                logout(true);
+            }
+        });
     }
 }
 
@@ -513,12 +523,20 @@ async function handleLogin(e) {
             state.token = full.token;
             state.user = full.user;
             saveSettings();
-            showAdminPanel();
+            // Проверяем, что сервер принимает новый токен (защита от «панель появилась и пропала»):
+            const valid = await validateToken();
+            if (valid) {
+                showAdminPanel();
+            } else {
+                logout(true);
+                alert('Сервер отверг токен авторизации. Скорее всего в .env не задан JWT_SECRET '
+                    + '(или он изменился после перезапуска сервера). Задайте постоянный JWT_SECRET в .env и повторите вход.');
+            }
         } else if (res.status === 401) {
-            alert(t('err_login'));
+            alert(`${t('err_login')}${full && full.error ? ': ' + full.error.message : ''}`);
         } else {
             const msg = full && full.error ? (full.error.message || '') : `HTTP ${res.status}`;
-            alert(`${t('err_login')}${msg ? ': ' + msg : ''}`);
+            alert(`Ошибка входа: ${msg || t('err_server')}`);
         }
     } catch (err) {
         console.error('Ошибка входа:', err);
@@ -533,7 +551,21 @@ function showAdminPanel() {
     loadAdminData();
 }
 
-function logout(silent = false) {
+// Проверка токена на бэкенде до показа панели.
+// Если токен недействителен (например, сервер перезапущен с новым JWT_SECRET
+// или в .env не задан JWT_SECRET) — сразу показываем форму входа,
+// а не панель, которая «исчезает через секунду».
+async function validateToken() {
+    try {
+        await apiFetch('/admin/stats', { headers: authHeaders() });
+        return true;
+    } catch (err) {
+        console.warn('Токен не принят сервером:', err.message);
+        return false;
+    }
+}
+
+async function logout(silent = false) {
     state.token = null;
     state.user = null;
     saveSettings();
