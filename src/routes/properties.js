@@ -46,7 +46,7 @@ router.get('/', async (req, res, next) => {
       paramCount++;
     }
 
-    query += ' ORDER BY p.created_at DESC';
+    query += " ORDER BY is_featured DESC NULLS LAST, created_at DESC";
 
     const result = await pool.query(query, params);
     // Единый формат ответа с остальными эндпоинтами: { success, data }
