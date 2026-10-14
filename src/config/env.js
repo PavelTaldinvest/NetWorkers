@@ -1,6 +1,12 @@
 // Централизованная загрузка и валидация переменных окружения.
-// Запуск сервера без установленного JWT_SECRET запрещён —
-// это закрывает уязвимость с fallback-секретом 'default-secret'.
+//
+// Политика секретов (пункт №1 рекомендаций по безопасности):
+//  - JWT_SECRET ОБЯЗАТЕЛЕН: значения по умолчанию в коде запрещены,
+//    иначе любой, кто видит репозиторий, может подделать токен администратора.
+//  - В тестовой среде (NODE_ENV=test) допускается детерминированный
+//    тестовый секрет — он не используется нигде, кроме Jest.
+
+const crypto = require('crypto');
 
 require('dotenv').config();
 
@@ -13,17 +19,40 @@ const INSECURE_SECRETS = [
   'changeme',
 ];
 
+// Только для NODE_ENV=test. Не является «секретом» вне тестов.
+const TEST_JWT_SECRET = 'test-secret-for-jest-only-0123456789abcdef0123456789abcdef';
+
+function fail(message) {
+  console.error(message);
+  process.exit(1);
+}
+
 function loadConfig() {
-  const secret = process.env.JWT_SECRET || 'e0ea76effb454d67152412236ae1de7c7a95033000f6ee384bc13c1d3aa27c66d775de7ba472e0a2ed4e11291313edfa';
+  const isTest = process.env.NODE_ENV === 'test';
+  const rawSecret = (process.env.JWT_SECRET || '').trim();
+
+  let secret;
+  if (!rawSecret) {
+    if (!isTest) {
+      fail(
+        '❌ FATAL: JWT_SECRET не задан в .env.\n' +
+        '   Значения по умолчанию в коде запрещены — с ними токены можно подделать.\n' +
+        '   Сгенерируйте надёжный секрет и добавьте его в .env:\n' +
+        `   JWT_SECRET=${crypto.randomBytes(48).toString('hex')}\n` +
+        '   Повторный запуск без JWT_SECRET приведёт к остановке сервера.'
+      );
+    }
+    secret = TEST_JWT_SECRET; // только Jest
+  } else {
+    secret = rawSecret;
+  }
 
   if (INSECURE_SECRETS.includes(secret) || secret.length < 32) {
-    console.error(
-      '❌ FATAL: JWT_SECRET не задан или слишком слабый (нужно >= 32 символов).\n' +
-      '   Сгенерируйте надёжный секрет и добавьте его в .env, например:\n' +
-      '   node -e "console.log(require(\'crypto\').randomBytes(48).toString(\'hex\'))"\n' +
-      '   Запуск с секретом по умолчанию небезопасен — токены можно подделать.'
+    fail(
+      '❌ FATAL: JWT_SECRET слишком слабый (нужно >= 32 случайных символов)\n' +
+      '   или совпадает с известным значением-заглушкой.\n' +
+      '   Сгенерируйте новый: node -e "console.log(require(\'crypto\').randomBytes(48).toString(\'hex\'))"'
     );
-    process.exit(1);
   }
 
   // Пароль БД обязателен: pg передаёт password в SASL-аутентификацию и
