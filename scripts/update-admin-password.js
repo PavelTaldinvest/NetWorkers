@@ -9,7 +9,7 @@ const pool = new Pool({
   port: process.env.DB_PORT || 5432,
   database: process.env.DB_NAME || 'egypt_estate',
   user: process.env.DB_USER || 'egypt_user',
-  password: process.env.DB_PASSWORD || '',
+  password: process.env.DB_PASSWORD || 'Strotal398',
 });
 
 (async () => {
