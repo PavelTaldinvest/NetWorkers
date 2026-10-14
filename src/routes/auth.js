@@ -3,6 +3,7 @@ const { body, validationResult } = require('express-validator');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
+const config = require('../config/env');
 const { authLimiter } = require('../middleware/rateLimiter');
 
 const router = express.Router();
@@ -49,6 +50,8 @@ router.post('/login', authLimiter, loginValidation, async (req, res, next) => {
     }
     const user = result.rows[0];
 
+    // Единое сообщение для «нет такого пользователя» и «неверный пароль» —
+    // защита от перечисления имён пользователей (user enumeration).
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -67,13 +70,21 @@ router.post('/login', authLimiter, loginValidation, async (req, res, next) => {
     if (!validPassword) {
       return res.status(401).json({
         success: false,
-        error: { message: 'Неверный пароль' }
+        error: { message: 'Неверные учётные данные' }
+      });
+    }
+
+    // Деактивированные пользователи не получают токен
+    if (user.is_active === false) {
+      return res.status(403).json({
+        success: false,
+        error: { message: 'Учётная запись деактивирована' }
       });
     }
 
     const token = jwt.sign(
       { id: user.id, username: user.username, role: user.role },
-      process.env.JWT_SECRET || 'default-secret', // та же константа, что в middleware/auth.js — иначе токен не пройдёт проверку
+      config.JWT_SECRET, // секрет обязателен — валидация в config/env.js
       { expiresIn: '24h' }
     );
 

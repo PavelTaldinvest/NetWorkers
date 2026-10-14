@@ -104,10 +104,10 @@ INSERT INTO property_types (name_ru, name_en, code) VALUES
 
 -- Валюты
 INSERT INTO currency_rates (code, rate) VALUES 
-('USD', 1.00),
-('EUR', 0.92),
-('EGP', 47.50),
-('RUB', 92.50);
+('USD', 47.50), -- конвенция: сколько EGP стоит 1 единица валюты (см. src/utils/currency.js)
+('EUR', 51.63),
+('EGP', 1.00),
+('RUB', 0.52);
 
 -- Администратор (пароль 'admin' должен быть захеширован в реальном приложении)
 -- Для примера вставляем просто заглушку, хеш нужно генерировать на бэкенде

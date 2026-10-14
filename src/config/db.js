@@ -1,19 +1,21 @@
 const { Pool } = require('pg');
+const config = require('./env');
 
 const pool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
-  port: process.env.DB_PORT || 5432,
-  database: process.env.DB_NAME || 'egypt_estate',
-  user: process.env.DB_USER || 'egypt_user',
-  password: process.env.DB_PASSWORD || '',
+  host: config.DB.host,
+  port: config.DB.port,
+  database: config.DB.database,
+  user: config.DB.user,
+  password: config.DB.password,
   max: 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
 });
 
+// Ошибки фоновых/idle-клиентов НЕ должны убивать весь процесс.
+// Логариуем; при следующем запросе пул создаст новое соединение.
 pool.on('error', (err) => {
-  console.error('Unexpected error on idle client', err);
-  process.exit(-1);
+  console.error('Unexpected error on idle client:', err.message);
 });
 
 module.exports = pool;
