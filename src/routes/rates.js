@@ -1,44 +1,54 @@
 const express = require('express');
 const pool = require('../config/db');
 const authMiddleware = require('../middleware/auth');
+const { requireAdmin } = require('../middleware/auth');
 const { apiLimiter } = require('../middleware/rateLimiter');
 const { updateCurrencyRates } = require('../services/currencyUpdater');
+const { CURRENCY_CODES } = require('../utils/currency');
 
 const router = express.Router();
 
-// Получить курсы валют
+// Конвенция: rate = сколько EGP стоит 1 единица валюты (см. src/utils/currency.js)
+async function getRatesMap() {
+  const result = await pool.query('SELECT * FROM currency_rates');
+  const rates = {};
+  result.rows.forEach(r => rates[r.code] = parseFloat(r.rate));
+  return { raw: result.rows, map: rates };
+}
+
+// Получить курсы валют (в единой EGP-конвенции, плюс meta для совместимости фронта)
 router.get('/', async (req, res, next) => {
   try {
-    const result = await pool.query('SELECT * FROM currency_rates');
-    const rates = {};
-    result.rows.forEach(r => rates[r.code] = parseFloat(r.rate));
-    res.json({ success: true, data: rates });
+    const { raw, map } = await getRatesMap();
+    res.json({
+      success: true,
+      data: map,
+      meta: {
+        base: 'EGP',
+        meaning: 'rate = количество EGP за 1 единицу валюты',
+        updated_at: raw.map(r => ({ code: r.code, updated_at: r.updated_at }))
+      }
+    });
   } catch (error) {
     next(error);
   }
 });
 
-// Обновить курс одной валюты вручную (только admin)
-router.put('/:code', authMiddleware, apiLimiter, async (req, res, next) => {
+// Обновить курс одной валюты вручную (только admin).
+// ВНИМАНИЕ: передаётся значение в той же EGP-конвенции, что и GET /api/rates.
+router.put('/:code', authMiddleware, requireAdmin, apiLimiter, async (req, res, next) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        error: { message: 'Доступ запрещён' }
-      });
-    }
-
     const code = String(req.params.code || '').toUpperCase();
     const rate = parseFloat(req.body.rate);
 
-    if (!['USD', 'EUR', 'EGP', 'RUB'].includes(code)) {
+    if (!CURRENCY_CODES.includes(code)) {
       return res.status(400).json({ success: false, error: { message: 'Неизвестный код валюты' } });
     }
     if (isNaN(rate) || rate <= 0) {
-      return res.status(400).json({ success: false, error: { message: 'Курс должен быть числом > 0' } });
+      return res.status(400).json({ success: false, error: { message: 'Курс должен быть числом > 0 (кол-во EGP за 1 единицу валюты)' } });
     }
-    // USD — базовая валюта, всегда 1
-    const finalRate = code === 'USD' ? 1 : rate;
+    // EGP — базовая валюта хранилища, всегда 1
+    const finalRate = code === 'EGP' ? 1 : rate;
 
     const result = await pool.query(
       `INSERT INTO currency_rates (code, rate, updated_at)
@@ -55,26 +65,16 @@ router.put('/:code', authMiddleware, apiLimiter, async (req, res, next) => {
 });
 
 // Обновить курсы валют вручную из внешнего источника (только admin)
-router.post('/refresh', authMiddleware, apiLimiter, async (req, res, next) => {
+router.post('/refresh', authMiddleware, requireAdmin, apiLimiter, async (req, res, next) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        error: { message: 'Доступ запрещён' }
-      });
-    }
-
     await updateCurrencyRates();
-    
-    // Получаем обновлённые курсы
-    const result = await pool.query('SELECT * FROM currency_rates');
-    const rates = {};
-    result.rows.forEach(r => rates[r.code] = parseFloat(r.rate));
-    
-    res.json({ 
-      success: true, 
+
+    const { map } = await getRatesMap();
+
+    res.json({
+      success: true,
       message: 'Курсы валют обновлены',
-      data: rates 
+      data: map
     });
   } catch (error) {
     next(error);
