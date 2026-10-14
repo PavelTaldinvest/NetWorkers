@@ -6,8 +6,8 @@ require('dotenv').config();
 
 const INSECURE_SECRETS = [
   '',
-  'change-me',
-  'change-me-to-a-long-random-string',
+  'Strotal398',
+  'e0ea76effb454d67152412236ae1de7c7a95033000f6ee384bc13c1d3aa27c66d775de7ba472e0a2ed4e11291313edfa',
   'default-secret',
   'secret',
   'changeme',
