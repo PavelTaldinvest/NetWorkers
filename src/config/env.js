@@ -8,12 +8,21 @@
 
 const crypto = require('crypto');
 
+// .env загружается ОДИН раз при первом require модуля. dotenv по умолчанию НЕ
+// перезаписывает уже существующие переменные process.env — это даёт тестам
+// (tests/setup.js) и оператору возможность переопределить значения из файла.
 require('dotenv').config();
 
+// Пустые строки в .env (например, «DB_PASSWORD=») dotenv возвращает как '' —
+// нормализуем их к undefined, чтобы дальше сравнивать с «переменная не задана».
+const nonEmpty = (v) => {
+  const s = v === undefined || v === null ? '' : String(v).trim();
+  return s === '' ? undefined : s;
+};
+
 const INSECURE_SECRETS = [
-  '',
-  'Strotal398',
-  'e0ea76effb454d67152412236ae1de7c7a95033000f6ee384bc13c1d3aa27c66d775de7ba472e0a2ed4e11291313edfa',
+  'change-me',
+  'change-me-to-a-long-random-string',
   'default-secret',
   'secret',
   'changeme',
@@ -29,7 +38,7 @@ function fail(message) {
 
 function loadConfig() {
   const isTest = process.env.NODE_ENV === 'test';
-  const rawSecret = (process.env.JWT_SECRET || '').trim();
+  const rawSecret = nonEmpty(process.env.JWT_SECRET);
 
   let secret;
   if (!rawSecret) {
@@ -57,8 +66,8 @@ function loadConfig() {
 
   // Пароль БД обязателен: pg передаёт password в SASL-аутентификацию и
   // падает с "client password must be a string", если значение — undefined.
-  const dbPassword = process.env.DB_PASSWORD;
-  if (dbPassword === undefined || dbPassword === null || String(dbPassword).trim() === '') {
+  const dbPassword = nonEmpty(process.env.DB_PASSWORD);
+  if (dbPassword === undefined) {
     console.error(
       '❌ FATAL: DB_PASSWORD не задан в .env.\n' +
       '   Откройте файл .env и укажите пароль пользователя PostgreSQL, например:\n' +
