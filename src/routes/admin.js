@@ -14,7 +14,8 @@ const router = express.Router();
 // Настройка загрузки файлов (Multer 2.x совместимость)
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadDir = './uploads';
+    // Абсолютный путь — чтобы загрузка работала независимо от cwd запуска
+    const uploadDir = path.join(__dirname, '..', '..', 'uploads');
     if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
     cb(null, uploadDir);
   },
