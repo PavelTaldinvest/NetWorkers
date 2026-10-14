@@ -35,7 +35,7 @@ function loadConfig() {
       port: Number(process.env.DB_PORT) || 5432,
       database: process.env.DB_NAME || 'egypt_estate',
       user: process.env.DB_USER || 'egypt_user',
-      password: process.env.DB_PASSWORD || '',
+      password: process.env.DB_PASSWORD || 'Strotal398',
     },
     NODE_ENV: process.env.NODE_ENV || 'development',
   };
