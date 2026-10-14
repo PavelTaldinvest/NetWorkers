@@ -76,6 +76,18 @@ router.patch('/applications/:id', authMiddleware, requireAdmin, apiLimiter, asyn
     const { id } = req.params;
     const { status, admin_comment } = req.body;
 
+    // Статус обязателен и должен быть из списка допустимых
+    if (!String(id).match(/^\d+$/)) {
+      return res.status(400).json({ success: false, error: { message: 'Неверный ID заявки' } });
+    }
+    const ALLOWED_STATUSES = ['new', 'contacted', 'completed', 'cancelled'];
+    if (!ALLOWED_STATUSES.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        error: { message: `Статус должен быть одним из: ${ALLOWED_STATUSES.join(', ')}` }
+      });
+    }
+
     // Защита от записи undefined/null поверх существующего комментария
     const result = await pool.query(
       `UPDATE applications SET status = $1, admin_comment = COALESCE($2, admin_comment) WHERE id = $3 RETURNING *`,

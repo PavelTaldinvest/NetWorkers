@@ -54,8 +54,9 @@ app.get('/api/health', (req, res) => {
       });
     })
     .catch(() => {
-      res.json({
-        status: 'ok',
+      // База недоступна — деградация сервиса: 503 для мониторинга/балансировщика
+      res.status(503).json({
+        status: 'degraded',
         db: false,
         uptime: process.uptime()
       });

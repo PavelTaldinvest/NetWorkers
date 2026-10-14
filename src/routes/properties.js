@@ -3,15 +3,22 @@ const pool = require('../config/db');
 
 const router = express.Router();
 
-// Получение списка объектов с фильтрацией
+// Получение списка объектов с фильтрацией и пагинацией.
+// Формат ответа: { success, data: [...], pagination: { page, limit, total, totalPages } }
+// Для совместимости со старым фронтендом в ответе также есть Number-поля
+// length / sliceStart / sliceEnd — у массива-объекта они не конфликтуют с данными.
 router.get('/', async (req, res, next) => {
   try {
     const { city, type, minPrice, maxPrice, search } = req.query;
 
-    // Пагинация: page (с 1), limit (по умолчанию 20, максимум 100)
+    // Пагинация: page (с 1), limit (по умолчанию 20, максимум 100).
+    // limit=0 или all=1 — вернуть все объекты (используется фронтендом
+    // для «избранных» и кэша state.properties).
     const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
-    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 20, 1), 100);
-    const offset = (page - 1) * limit;
+    const rawLimit = parseInt(req.query.limit, 10);
+    const wantAll = String(req.query.all || '') === '1' || rawLimit === 0;
+    const limit = wantAll ? null : Math.min(Math.max(isNaN(rawLimit) ? 20 : rawLimit, 1), 100);
+    const offset = (page - 1) * (limit || 1);
 
     let query = `
       SELECT p.*, c.name_ru as city_name_ru, c.name_en as city_name_en,
@@ -51,8 +58,11 @@ router.get('/', async (req, res, next) => {
       paramCount++;
     }
 
-    query += ` ORDER BY p.created_at DESC LIMIT $${paramCount} OFFSET $${paramCount + 1}`;
-    params.push(limit, offset);
+    query += ` ORDER BY p.created_at DESC`;
+    if (limit !== null) {
+      query += ` LIMIT $${paramCount} OFFSET $${paramCount + 1}`;
+      params.push(limit, offset);
+    }
 
     // Общее число совпадений — для подсчёта страниц на фронтенде
     const countQuery = query
@@ -61,19 +71,25 @@ router.get('/', async (req, res, next) => {
 
     const [result, countResult] = await Promise.all([
       pool.query(query, params),
-      pool.query(countQuery, params.slice(0, params.length - 2)),
+      pool.query(countQuery, limit !== null ? params.slice(0, params.length - 2) : params),
     ]);
 
     const total = parseInt(countResult.rows[0].cnt, 10);
-    // Единый формат ответа с остальными эндпоинтами: { success, data }
+    const effectiveLimit = limit === null ? total || 1 : limit;
+    // Единый формат ответа с остальными эндпоинтами: { success, data }.
+    // length/sliceStart/sliceEnd — псевдо-массивные поля для совместимости
+    // со старым кодом фронтенда, который ожидает от /properties массив.
     res.json({
       success: true,
       data: result.rows,
+      length: result.rows.length,
+      sliceStart: limit === null ? 0 : offset,
+      sliceEnd: (limit === null ? 0 : offset) + result.rows.length,
       pagination: {
         page,
-        limit,
+        limit: effectiveLimit,
         total,
-        totalPages: Math.ceil(total / limit),
+        totalPages: Math.ceil(total / effectiveLimit) || 1,
       },
     });
   } catch (error) {

@@ -13,7 +13,8 @@ let state = {
     properties: [],
     cities: [],
     types: [],
-    rates: { USD: 1, EUR: 0.92, EGP: 47.5, RUB: 92.5 }
+    // EGP-конвенция: rate = сколько EGP стоит 1 единица валюты (см. src/utils/currency.js)
+    rates: { USD: 47.5, EUR: 51.63, EGP: 1, RUB: 0.52 }
 };
 
 // ==================== Переводы ====================
@@ -324,9 +325,17 @@ function initCurrencySelect() {
     });
 }
 
+// Конвертация цены из USD в выбранную валюту.
+// Бэкенд хранит курсы в EGP-конвенции: rate = сколько EGP стоит 1 единица валюты
+// (см. src/utils/currency.js). Поэтому цена в X = priceUSD * (rateUSD / rateX).
 function convertPrice(priceUSD) {
-    const rate = state.rates[state.currency] || 1;
-    const converted = parseFloat(priceUSD || 0) * rate;
+    const rates = state.rates || {};
+    const rUsd = parseFloat(rates.USD);
+    const rCur = parseFloat(rates[state.currency]);
+    let converted = parseFloat(priceUSD || 0);
+    if (Number.isFinite(rUsd) && Number.isFinite(rCur) && rUsd > 0 && rCur > 0) {
+        converted = converted * (rUsd / rCur);
+    }
     const symbols = { USD: '$', EUR: '€', EGP: '£', RUB: '₽' };
     return `${symbols[state.currency] || state.currency} ${converted.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 }
@@ -347,7 +356,14 @@ async function loadProperties() {
         if (max) params.append('maxPrice', max);
         if (search) params.append('search', search);
 
-        state.properties = await apiFetch(`/properties?${params}`);
+        // all=1 — получить все объекты (бэкенд поддерживает пагинацию,
+        // но каталог на этой странице рендерится целиком)
+        params.append('all', '1');
+
+        const data = await apiFetch(`/properties?${params}`);
+        // Бэкенд возвращает { success, data: [...] }; apiFetch разворачивает .data,
+        // но оставляем защиту на случай прямого массива
+        state.properties = Array.isArray(data) ? data : [];
         renderProperties(state.properties, 'propertiesGrid');
         loadFeaturedProperties();
     } catch (err) {
@@ -788,12 +804,13 @@ async function loadRates() {
     try {
         const rates = await apiFetch('/rates');
         if (rates && typeof rates === 'object') {
-            state.rates = { USD: 1, ...rates };
+            // Бэкенд отдаёт курсы в EGP-конвенции — используем их как есть
+            state.rates = rates;
         }
         if (document.getElementById('rateEUR')) {
-            document.getElementById('rateEUR').value = state.rates.EUR ?? 0.92;
-            document.getElementById('rateEGP').value = state.rates.EGP ?? 47.5;
-            document.getElementById('rateRUB').value = state.rates.RUB ?? 92.5;
+            document.getElementById('rateEUR').value = state.rates.EUR ?? 51.63;
+            document.getElementById('rateEGP').value = state.rates.EGP ?? 1;
+            document.getElementById('rateRUB').value = state.rates.RUB ?? 0.52;
         }
     } catch (err) {
         console.warn('Не удалось загрузить курсы, используются значения по умолчанию:', err.message);
@@ -832,10 +849,10 @@ async function saveRates(e) {
 async function refreshRatesFromApi() {
     try {
         const data = await apiFetch('/rates/refresh', { method: 'POST', headers: authHeaders() });
-        if (data && typeof data === 'object') state.rates = { USD: 1, ...data };
-        document.getElementById('rateEUR').value = state.rates.EUR ?? 0.92;
-        document.getElementById('rateEGP').value = state.rates.EGP ?? 47.5;
-        document.getElementById('rateRUB').value = state.rates.RUB ?? 92.5;
+        if (data && typeof data === 'object') state.rates = data; // EGP-конвенция, как отдаёт бэкенд
+        document.getElementById('rateEUR').value = state.rates.EUR ?? 51.63;
+        document.getElementById('rateEGP').value = state.rates.EGP ?? 1;
+        document.getElementById('rateRUB').value = state.rates.RUB ?? 0.52;
         alert(t('rates_refreshed'));
         renderProperties(state.properties, 'propertiesGrid');
         loadFeaturedProperties();
