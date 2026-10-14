@@ -14,7 +14,9 @@ let state = {
     cities: [],
     types: [],
     // EGP-конвенция: rate = сколько EGP стоит 1 единица валюты (см. src/utils/currency.js)
-    rates: { USD: 47.5, EUR: 51.63, EGP: 1, RUB: 0.52 }
+    rates: { USD: 47.5, EUR: 51.63, EGP: 1, RUB: 0.52 },
+    // Пагинация каталога
+    catalog: { page: 1, limit: 9, total: 0, totalPages: 1 }
 };
 
 // ==================== Переводы ====================
@@ -64,6 +66,9 @@ const translations = {
         delete: 'Удалить',
         view: 'Просмотр',
         no_properties: 'Нет объектов',
+        prev_page: 'Назад',
+        next_page: 'Вперёд',
+        page_label: 'Стр.',
         confirm_delete: 'Вы уверены?',
         status_new: 'Новая',
         status_contacted: 'Контакт',
@@ -130,6 +135,9 @@ const translations = {
         delete: 'Delete',
         view: 'View',
         no_properties: 'No properties',
+        prev_page: 'Prev',
+        next_page: 'Next',
+        page_label: 'Page',
         confirm_delete: 'Are you sure?',
         status_new: 'New',
         status_contacted: 'Contacted',
@@ -341,7 +349,7 @@ function convertPrice(priceUSD) {
 }
 
 // ==================== Каталог ====================
-async function loadProperties() {
+async function loadProperties(page = 1) {
     try {
         const params = new URLSearchParams();
         const city = document.getElementById('cityFilter')?.value;
@@ -356,19 +364,53 @@ async function loadProperties() {
         if (max) params.append('maxPrice', max);
         if (search) params.append('search', search);
 
-        // all=1 — получить все объекты (бэкенд поддерживает пагинацию,
-        // но каталог на этой странице рендерится целиком)
-        params.append('all', '1');
+        // Серверная пагинация каталога
+        params.append('page', page);
+        params.append('limit', state.catalog.limit);
 
-        const data = await apiFetch(`/properties?${params}`);
-        // Бэкенд возвращает { success, data: [...] }; apiFetch разворачивает .data,
-        // но оставляем защиту на случай прямого массива
-        state.properties = Array.isArray(data) ? data : [];
-        renderProperties(state.properties, 'propertiesGrid');
-        loadFeaturedProperties();
+        const res = await fetch(`${API_URL}/properties?${params}`);
+        const json = await res.json();
+        const items = Array.isArray(json.data) ? json.data : [];
+        const pg = json.pagination || { page: 1, limit: state.catalog.limit, total: items.length, totalPages: 1 };
+
+        state.catalog = { page: pg.page, limit: pg.limit, total: pg.total, totalPages: pg.totalPages };
+        state.properties = items;
+        renderProperties(items, 'propertiesGrid');
+        renderCatalogPagination();
+
+        // «Избранные» на главной: если на текущей странице меньше 3 объектов
+        // (например, последняя страница) — догружаем первые 3 отдельным запросом
+        if (items.length >= 3) {
+            loadFeaturedProperties();
+        } else {
+            try {
+                const featuredRes = await fetch(`${API_URL}/properties?page=1&limit=3`);
+                const featuredJson = await featuredRes.json();
+                renderProperties(Array.isArray(featuredJson.data) ? featuredJson.data : [], 'featuredProperties');
+            } catch (e) { /* тихо: избранные не критичны */ }
+        }
     } catch (err) {
         console.error('Ошибка загрузки свойств:', err);
     }
+}
+
+// ==================== Пагинация каталога ====================
+function renderCatalogPagination() {
+    const el = document.getElementById('catalogPagination');
+    if (!el) return;
+    const { page, totalPages, total } = state.catalog;
+    if (totalPages <= 1) { el.innerHTML = ''; return; }
+
+    let html = `<button class="btn btn-secondary" ${page <= 1 ? 'disabled' : ''} onclick="goCatalogPage(${page - 1})">← ${t('prev_page')}</button>`;
+    html += `<span class="catalog-page-info">${t('page_label')} ${page} / ${totalPages} (${total})</span>`;
+    html += `<button class="btn btn-secondary" ${page >= totalPages ? 'disabled' : ''} onclick="goCatalogPage(${page + 1})">${t('next_page')} →</button>`;
+    el.innerHTML = html;
+}
+
+function goCatalogPage(page) {
+    if (page < 1 || page > state.catalog.totalPages) return;
+    loadProperties(page);
+    document.getElementById('catalog-page')?.scrollIntoView({ behavior: 'smooth' });
 }
 
 function loadFeaturedProperties() {
@@ -463,7 +505,8 @@ function populateSelects() {
 }
 
 function applyFilters() {
-    loadProperties();
+    // При смене фильтров всегда начинаем с первой страницы
+    loadProperties(1);
 }
 
 // ==================== Модалка объекта ====================

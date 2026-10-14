@@ -72,6 +72,7 @@ router.get('/applications', authMiddleware, requireAdmin, apiLimiter, async (req
 
 // Обновить статус заявки
 router.patch('/applications/:id', authMiddleware, requireAdmin, apiLimiter, async (req, res, next) => {
+  const client = await pool.connect();
   try {
     const { id } = req.params;
     const { status, admin_comment } = req.body;
@@ -88,17 +89,59 @@ router.patch('/applications/:id', authMiddleware, requireAdmin, apiLimiter, asyn
       });
     }
 
+    await client.query('BEGIN');
+
+    // Текущее состояние заявки (для записи в историю), блокируем строку от гонок
+    const current = await client.query(
+      'SELECT id, status, admin_comment FROM applications WHERE id = $1 FOR UPDATE',
+      [id]
+    );
+    if (current.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ success: false, error: { message: 'Заявка не найдена' } });
+    }
+    const prev = current.rows[0];
+
     // Защита от записи undefined/null поверх существующего комментария
-    const result = await pool.query(
+    const result = await client.query(
       `UPDATE applications SET status = $1, admin_comment = COALESCE($2, admin_comment) WHERE id = $3 RETURNING *`,
       [status, admin_comment ?? null, id]
     );
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({ success: false, error: { message: 'Заявка не найдена' } });
-    }
-    
+    // История изменений: кто, когда, что было -> что стало
+    await client.query(
+      `INSERT INTO application_history
+         (application_id, changed_by, old_status, new_status, old_comment, new_comment)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [id, req.user.id, prev.status, status, prev.admin_comment, result.rows[0].admin_comment]
+    );
+
+    await client.query('COMMIT');
     res.json({ success: true, data: result.rows[0] });
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => {});
+    next(error);
+  } finally {
+    client.release();
+  }
+});
+
+// История изменений конкретной заявки (для админки)
+router.get('/applications/:id/history', authMiddleware, requireAdmin, apiLimiter, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    if (!String(id).match(/^\d+$/)) {
+      return res.status(400).json({ success: false, error: { message: 'Неверный ID заявки' } });
+    }
+    const result = await pool.query(
+      `SELECT h.*, u.username AS changed_by_username
+       FROM application_history h
+       LEFT JOIN users u ON h.changed_by = u.id
+       WHERE h.application_id = $1
+       ORDER BY h.changed_at DESC`,
+      [id]
+    );
+    res.json({ success: true, data: result.rows });
   } catch (error) {
     next(error);
   }
