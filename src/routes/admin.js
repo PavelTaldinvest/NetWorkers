@@ -7,6 +7,7 @@ const fs = require('fs');
 const { body, validationResult } = require('express-validator');
 const pool = require('../config/db');
 const authMiddleware = require('../middleware/auth');
+const { requireAdmin } = require('../middleware/auth');
 const { apiLimiter } = require('../middleware/rateLimiter');
 
 const router = express.Router();
@@ -53,15 +54,8 @@ const propertyValidation = [
 ];
 
 // Получить все заявки
-router.get('/applications', authMiddleware, apiLimiter, async (req, res, next) => {
+router.get('/applications', authMiddleware, requireAdmin, apiLimiter, async (req, res, next) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        error: { message: 'Доступ запрещён' }
-      });
-    }
-
     const result = await pool.query(`
       SELECT a.*, p.title_ru, p.title_en, u.username as agent_username
       FROM applications a
@@ -77,15 +71,8 @@ router.get('/applications', authMiddleware, apiLimiter, async (req, res, next) =
 });
 
 // Обновить статус заявки
-router.patch('/applications/:id', authMiddleware, apiLimiter, async (req, res, next) => {
+router.patch('/applications/:id', authMiddleware, requireAdmin, apiLimiter, async (req, res, next) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        error: { message: 'Доступ запрещён' }
-      });
-    }
-
     const { id } = req.params;
     const { status, admin_comment } = req.body;
 
@@ -106,15 +93,8 @@ router.patch('/applications/:id', authMiddleware, apiLimiter, async (req, res, n
 });
 
 // Получить все объекты (админ)
-router.get('/properties', authMiddleware, apiLimiter, async (req, res, next) => {
+router.get('/properties', authMiddleware, requireAdmin, apiLimiter, async (req, res, next) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        error: { message: 'Доступ запрещён' }
-      });
-    }
-
     const result = await pool.query('SELECT * FROM properties ORDER BY created_at DESC');
     res.json({ success: true, data: result.rows });
   } catch (error) {
@@ -123,15 +103,8 @@ router.get('/properties', authMiddleware, apiLimiter, async (req, res, next) => 
 });
 
 // Создать объект
-router.post('/properties', authMiddleware, upload.single('image'), propertyValidation, async (req, res, next) => {
+router.post('/properties', authMiddleware, requireAdmin, upload.single('image'), propertyValidation, async (req, res, next) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        error: { message: 'Доступ запрещён' }
-      });
-    }
-
     // Проверка валидации
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -145,6 +118,21 @@ router.post('/properties', authMiddleware, upload.single('image'), propertyValid
     }
 
     const { title_ru, title_en, description_ru, description_en, price_usd, city_id, type_id, bedrooms, bathrooms, area_sqm, image_url } = req.body;
+
+    // Справочники должны существовать (иначе INSERT упадёт ошибкой внешнего ключа 23503)
+    const refs = await pool.query(
+      `SELECT
+         (SELECT COUNT(*) FROM cities WHERE id = $1)::int AS city_cnt,
+         (SELECT COUNT(*) FROM property_types WHERE id = $2)::int AS type_cnt`,
+      [city_id, type_id]
+    );
+    if (refs.rows[0].city_cnt === 0 || refs.rows[0].type_cnt === 0) {
+      return res.status(400).json({
+        success: false,
+        error: { message: 'Указан несуществующий город или тип объекта' }
+      });
+    }
+
     // Приоритет: загруженный файл > переданный URL > заглушка
     let finalImageUrl = '/favicon.png';
     if (image_url && String(image_url).trim()) finalImageUrl = String(image_url).trim();
@@ -158,20 +146,16 @@ router.post('/properties', authMiddleware, upload.single('image'), propertyValid
     
     res.status(201).json({ success: true, data: result.rows[0] });
   } catch (error) {
+    if (error.code === '23503') {
+      return res.status(400).json({ success: false, error: { message: 'Несуществующий город или тип объекта' } });
+    }
     next(error);
   }
 });
 
 // Обновление объекта: принимает JSON (частичное обновление) ИЛИ multipart с файлом image
-router.put('/properties/:id', authMiddleware, apiLimiter, upload.single('image'), async (req, res, next) => {
+router.put('/properties/:id', authMiddleware, requireAdmin, apiLimiter, upload.single('image'), async (req, res, next) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        error: { message: 'Доступ запрещён' }
-      });
-    }
-
     const { id } = req.params;
     const data = req.body;
 
@@ -190,6 +174,18 @@ router.put('/properties/:id', authMiddleware, apiLimiter, upload.single('image')
     }
     if (data.status !== undefined && !['active', 'sold', 'rented'].includes(data.status)) {
       return res.status(400).json({ success: false, error: { message: "Статус: active | sold | rented" } });
+    }
+    // Если приходят city_id/type_id — они должны существовать в справочниках
+    if (data.city_id !== undefined || data.type_id !== undefined) {
+      const refs = await pool.query(
+        `SELECT
+           ($1::int IS NULL OR (SELECT COUNT(*) FROM cities WHERE id = $1) > 0) AS city_ok,
+           ($2::int IS NULL OR (SELECT COUNT(*) FROM property_types WHERE id = $2) > 0) AS type_ok`,
+        [data.city_id ?? null, data.type_id ?? null]
+      );
+      if (!refs.rows[0].city_ok || !refs.rows[0].type_ok) {
+        return res.status(400).json({ success: false, error: { message: 'Указан несуществующий город или тип объекта' } });
+      }
     }
 
     const result = await pool.query(
@@ -210,23 +206,30 @@ router.put('/properties/:id', authMiddleware, apiLimiter, upload.single('image')
     
     res.json({ success: true, data: result.rows[0] });
   } catch (error) {
+    if (error.code === '23503') {
+      return res.status(400).json({ success: false, error: { message: 'Несуществующий город или тип объекта' } });
+    }
     next(error);
   }
 });
 
 // Удалить объект
-router.delete('/properties/:id', authMiddleware, apiLimiter, async (req, res, next) => {
+router.delete('/properties/:id', authMiddleware, requireAdmin, apiLimiter, async (req, res, next) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        error: { message: 'Доступ запрещён' }
-      });
+    const { id } = req.params;
+    const found = await pool.query('SELECT image_url FROM properties WHERE id = $1', [id]);
+    if (found.rows.length === 0) {
+      return res.status(404).json({ success: false, error: { message: 'Объект не найден' } });
+    }
+    await pool.query('DELETE FROM properties WHERE id = $1', [id]);
+
+    // Удаляем связанный загруженный файл, чтобы в uploads не скапливались «сироты»
+    const imageUrl = found.rows[0].image_url;
+    if (imageUrl && imageUrl.startsWith('/uploads/')) {
+      const filePath = path.join(__dirname, '..', '..', 'uploads', path.basename(imageUrl));
+      fs.unlink(filePath, () => {}); // ошибка удаления не должна ломать ответ
     }
 
-    const { id } = req.params;
-    await pool.query('DELETE FROM properties WHERE id = $1', [id]);
-    
     res.json({ success: true, message: 'Удалено' });
   } catch (error) {
     next(error);
@@ -234,15 +237,8 @@ router.delete('/properties/:id', authMiddleware, apiLimiter, async (req, res, ne
 });
 
 // Статистика для админки
-router.get('/stats', authMiddleware, apiLimiter, async (req, res, next) => {
+router.get('/stats', authMiddleware, requireAdmin, apiLimiter, async (req, res, next) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        error: { message: 'Доступ запрещён' }
-      });
-    }
-
     const totalProps = await pool.query('SELECT COUNT(*) FROM properties');
     const totalApps = await pool.query('SELECT COUNT(*) FROM applications');
     const newApps = await pool.query("SELECT COUNT(*) FROM applications WHERE status = 'new'");

@@ -8,6 +8,11 @@ router.get('/', async (req, res, next) => {
   try {
     const { city, type, minPrice, maxPrice, search } = req.query;
 
+    // Пагинация: page (с 1), limit (по умолчанию 20, максимум 100)
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 20, 1), 100);
+    const offset = (page - 1) * limit;
+
     let query = `
       SELECT p.*, c.name_ru as city_name_ru, c.name_en as city_name_en,
              t.name_ru as type_name_ru, t.name_en as type_name_en
@@ -46,11 +51,31 @@ router.get('/', async (req, res, next) => {
       paramCount++;
     }
 
-    query += ' ORDER BY p.created_at DESC';
+    query += ` ORDER BY p.created_at DESC LIMIT $${paramCount} OFFSET $${paramCount + 1}`;
+    params.push(limit, offset);
 
-    const result = await pool.query(query, params);
+    // Общее число совпадений — для подсчёта страниц на фронтенде
+    const countQuery = query
+      .replace(/SELECT[\s\S]*?FROM properties p/, 'SELECT COUNT(*) AS cnt FROM properties p')
+      .replace(/ ORDER BY[\s\S]*$/, '');
+
+    const [result, countResult] = await Promise.all([
+      pool.query(query, params),
+      pool.query(countQuery, params.slice(0, params.length - 2)),
+    ]);
+
+    const total = parseInt(countResult.rows[0].cnt, 10);
     // Единый формат ответа с остальными эндпоинтами: { success, data }
-    res.json({ success: true, data: result.rows });
+    res.json({
+      success: true,
+      data: result.rows,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
   } catch (error) {
     next(error);
   }
