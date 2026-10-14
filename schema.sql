@@ -86,6 +86,20 @@ CREATE INDEX idx_properties_price ON properties(price_usd);
 CREATE INDEX idx_applications_status ON applications(status);
 CREATE INDEX idx_users_role ON users(role);
 
+-- История изменений заявок (кто, когда и что поменял)
+DROP TABLE IF EXISTS application_history CASCADE;
+CREATE TABLE application_history (
+    id SERIAL PRIMARY KEY,
+    application_id INTEGER NOT NULL REFERENCES applications(id) ON DELETE CASCADE,
+    changed_by INTEGER REFERENCES users(id) ON DELETE SET NULL,  -- NULL если система/неизвестно
+    old_status VARCHAR(20),
+    new_status VARCHAR(20),
+    old_comment TEXT,
+    new_comment TEXT,
+    changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX idx_app_history_app ON application_history(application_id);
+
 -- Начальные данные (Seed Data)
 
 -- Города
@@ -112,4 +126,4 @@ INSERT INTO currency_rates (code, rate) VALUES
 -- Администратор (пароль 'admin' должен быть захеширован в реальном приложении)
 -- Для примера вставляем просто заглушку, хеш нужно генерировать на бэкенде
 INSERT INTO users (username, password_hash, email, full_name, role) VALUES 
-('admin', 'e0ea76effb454d67152412236ae1de7c7a95033000f6ee384bc13c1d3aa27c66d775de7ba472e0a2ed4e11291313edfa', 'admin@egyptestate.com', 'Главный Администратор', 'admin');
+('admin', '$2b$10$092Xe5r/na7baVbf.TBG6../bFlVBrI/4xbhBf6PpXn.NrmCZx01u', 'admin@egyptestate.com', 'Главный Администратор', 'admin');

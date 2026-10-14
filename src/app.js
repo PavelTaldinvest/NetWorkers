@@ -37,7 +37,9 @@ app.use(morgan('dev')); // Логирование запросов
 
 // Статика (фронтенд) — только папка public, чтобы не отдавать .env / src / node_modules
 app.use(express.static(path.join(__dirname, '..', 'public')));
-app.use('/uploads', express.static('uploads'));
+// Загруженные файлы — абсолютный путь от корня проекта,
+// чтобы путь работал независимо от текущей директории запуска
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -52,8 +54,9 @@ app.get('/api/health', (req, res) => {
       });
     })
     .catch(() => {
-      res.json({
-        status: 'ok',
+      // База недоступна — деградация сервиса: 503 для мониторинга/балансировщика
+      res.status(503).json({
+        status: 'degraded',
         db: false,
         uptime: process.uptime()
       });

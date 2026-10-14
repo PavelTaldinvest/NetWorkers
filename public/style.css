@@ -661,3 +661,23 @@ body {
         font-size: 0.8rem;
     }
 }
+
+/* ==================== Пагинация каталога ==================== */
+.catalog-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    margin-top: 32px;
+    flex-wrap: wrap;
+}
+
+.catalog-pagination button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.catalog-page-info {
+    font-size: 0.95rem;
+    color: var(--text-secondary, #666);
+}

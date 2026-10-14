@@ -7,6 +7,7 @@ const fs = require('fs');
 const { body, validationResult } = require('express-validator');
 const pool = require('../config/db');
 const authMiddleware = require('../middleware/auth');
+const { requireAdmin } = require('../middleware/auth');
 const { apiLimiter } = require('../middleware/rateLimiter');
 
 const router = express.Router();
@@ -14,7 +15,8 @@ const router = express.Router();
 // Настройка загрузки файлов (Multer 2.x совместимость)
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadDir = './uploads';
+    // Абсолютный путь — чтобы загрузка работала независимо от cwd запуска
+    const uploadDir = path.join(__dirname, '..', '..', 'uploads');
     if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
     cb(null, uploadDir);
   },
@@ -52,15 +54,8 @@ const propertyValidation = [
 ];
 
 // Получить все заявки
-router.get('/applications', authMiddleware, apiLimiter, async (req, res, next) => {
+router.get('/applications', authMiddleware, requireAdmin, apiLimiter, async (req, res, next) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        error: { message: 'Доступ запрещён' }
-      });
-    }
-
     const result = await pool.query(`
       SELECT a.*, p.title_ru, p.title_en, u.username as agent_username
       FROM applications a
@@ -76,44 +71,85 @@ router.get('/applications', authMiddleware, apiLimiter, async (req, res, next) =
 });
 
 // Обновить статус заявки
-router.patch('/applications/:id', authMiddleware, apiLimiter, async (req, res, next) => {
+router.patch('/applications/:id', authMiddleware, requireAdmin, apiLimiter, async (req, res, next) => {
+  const client = await pool.connect();
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        error: { message: 'Доступ запрещён' }
-      });
-    }
-
     const { id } = req.params;
     const { status, admin_comment } = req.body;
 
+    // Статус обязателен и должен быть из списка допустимых
+    if (!String(id).match(/^\d+$/)) {
+      return res.status(400).json({ success: false, error: { message: 'Неверный ID заявки' } });
+    }
+    const ALLOWED_STATUSES = ['new', 'contacted', 'completed', 'cancelled'];
+    if (!ALLOWED_STATUSES.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        error: { message: `Статус должен быть одним из: ${ALLOWED_STATUSES.join(', ')}` }
+      });
+    }
+
+    await client.query('BEGIN');
+
+    // Текущее состояние заявки (для записи в историю), блокируем строку от гонок
+    const current = await client.query(
+      'SELECT id, status, admin_comment FROM applications WHERE id = $1 FOR UPDATE',
+      [id]
+    );
+    if (current.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ success: false, error: { message: 'Заявка не найдена' } });
+    }
+    const prev = current.rows[0];
+
     // Защита от записи undefined/null поверх существующего комментария
-    const result = await pool.query(
+    const result = await client.query(
       `UPDATE applications SET status = $1, admin_comment = COALESCE($2, admin_comment) WHERE id = $3 RETURNING *`,
       [status, admin_comment ?? null, id]
     );
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({ success: false, error: { message: 'Заявка не найдена' } });
-    }
-    
+    // История изменений: кто, когда, что было -> что стало
+    await client.query(
+      `INSERT INTO application_history
+         (application_id, changed_by, old_status, new_status, old_comment, new_comment)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [id, req.user.id, prev.status, status, prev.admin_comment, result.rows[0].admin_comment]
+    );
+
+    await client.query('COMMIT');
     res.json({ success: true, data: result.rows[0] });
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => {});
+    next(error);
+  } finally {
+    client.release();
+  }
+});
+
+// История изменений конкретной заявки (для админки)
+router.get('/applications/:id/history', authMiddleware, requireAdmin, apiLimiter, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    if (!String(id).match(/^\d+$/)) {
+      return res.status(400).json({ success: false, error: { message: 'Неверный ID заявки' } });
+    }
+    const result = await pool.query(
+      `SELECT h.*, u.username AS changed_by_username
+       FROM application_history h
+       LEFT JOIN users u ON h.changed_by = u.id
+       WHERE h.application_id = $1
+       ORDER BY h.changed_at DESC`,
+      [id]
+    );
+    res.json({ success: true, data: result.rows });
   } catch (error) {
     next(error);
   }
 });
 
 // Получить все объекты (админ)
-router.get('/properties', authMiddleware, apiLimiter, async (req, res, next) => {
+router.get('/properties', authMiddleware, requireAdmin, apiLimiter, async (req, res, next) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        error: { message: 'Доступ запрещён' }
-      });
-    }
-
     const result = await pool.query('SELECT * FROM properties ORDER BY created_at DESC');
     res.json({ success: true, data: result.rows });
   } catch (error) {
@@ -122,15 +158,8 @@ router.get('/properties', authMiddleware, apiLimiter, async (req, res, next) => 
 });
 
 // Создать объект
-router.post('/properties', authMiddleware, upload.single('image'), propertyValidation, async (req, res, next) => {
+router.post('/properties', authMiddleware, requireAdmin, upload.single('image'), propertyValidation, async (req, res, next) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        error: { message: 'Доступ запрещён' }
-      });
-    }
-
     // Проверка валидации
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -144,6 +173,21 @@ router.post('/properties', authMiddleware, upload.single('image'), propertyValid
     }
 
     const { title_ru, title_en, description_ru, description_en, price_usd, city_id, type_id, bedrooms, bathrooms, area_sqm, image_url } = req.body;
+
+    // Справочники должны существовать (иначе INSERT упадёт ошибкой внешнего ключа 23503)
+    const refs = await pool.query(
+      `SELECT
+         (SELECT COUNT(*) FROM cities WHERE id = $1)::int AS city_cnt,
+         (SELECT COUNT(*) FROM property_types WHERE id = $2)::int AS type_cnt`,
+      [city_id, type_id]
+    );
+    if (refs.rows[0].city_cnt === 0 || refs.rows[0].type_cnt === 0) {
+      return res.status(400).json({
+        success: false,
+        error: { message: 'Указан несуществующий город или тип объекта' }
+      });
+    }
+
     // Приоритет: загруженный файл > переданный URL > заглушка
     let finalImageUrl = '/favicon.png';
     if (image_url && String(image_url).trim()) finalImageUrl = String(image_url).trim();
@@ -157,20 +201,16 @@ router.post('/properties', authMiddleware, upload.single('image'), propertyValid
     
     res.status(201).json({ success: true, data: result.rows[0] });
   } catch (error) {
+    if (error.code === '23503') {
+      return res.status(400).json({ success: false, error: { message: 'Несуществующий город или тип объекта' } });
+    }
     next(error);
   }
 });
 
 // Обновление объекта: принимает JSON (частичное обновление) ИЛИ multipart с файлом image
-router.put('/properties/:id', authMiddleware, apiLimiter, upload.single('image'), async (req, res, next) => {
+router.put('/properties/:id', authMiddleware, requireAdmin, apiLimiter, upload.single('image'), async (req, res, next) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        error: { message: 'Доступ запрещён' }
-      });
-    }
-
     const { id } = req.params;
     const data = req.body;
 
@@ -189,6 +229,18 @@ router.put('/properties/:id', authMiddleware, apiLimiter, upload.single('image')
     }
     if (data.status !== undefined && !['active', 'sold', 'rented'].includes(data.status)) {
       return res.status(400).json({ success: false, error: { message: "Статус: active | sold | rented" } });
+    }
+    // Если приходят city_id/type_id — они должны существовать в справочниках
+    if (data.city_id !== undefined || data.type_id !== undefined) {
+      const refs = await pool.query(
+        `SELECT
+           ($1::int IS NULL OR (SELECT COUNT(*) FROM cities WHERE id = $1) > 0) AS city_ok,
+           ($2::int IS NULL OR (SELECT COUNT(*) FROM property_types WHERE id = $2) > 0) AS type_ok`,
+        [data.city_id ?? null, data.type_id ?? null]
+      );
+      if (!refs.rows[0].city_ok || !refs.rows[0].type_ok) {
+        return res.status(400).json({ success: false, error: { message: 'Указан несуществующий город или тип объекта' } });
+      }
     }
 
     const result = await pool.query(
@@ -209,23 +261,30 @@ router.put('/properties/:id', authMiddleware, apiLimiter, upload.single('image')
     
     res.json({ success: true, data: result.rows[0] });
   } catch (error) {
+    if (error.code === '23503') {
+      return res.status(400).json({ success: false, error: { message: 'Несуществующий город или тип объекта' } });
+    }
     next(error);
   }
 });
 
 // Удалить объект
-router.delete('/properties/:id', authMiddleware, apiLimiter, async (req, res, next) => {
+router.delete('/properties/:id', authMiddleware, requireAdmin, apiLimiter, async (req, res, next) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        error: { message: 'Доступ запрещён' }
-      });
+    const { id } = req.params;
+    const found = await pool.query('SELECT image_url FROM properties WHERE id = $1', [id]);
+    if (found.rows.length === 0) {
+      return res.status(404).json({ success: false, error: { message: 'Объект не найден' } });
+    }
+    await pool.query('DELETE FROM properties WHERE id = $1', [id]);
+
+    // Удаляем связанный загруженный файл, чтобы в uploads не скапливались «сироты»
+    const imageUrl = found.rows[0].image_url;
+    if (imageUrl && imageUrl.startsWith('/uploads/')) {
+      const filePath = path.join(__dirname, '..', '..', 'uploads', path.basename(imageUrl));
+      fs.unlink(filePath, () => {}); // ошибка удаления не должна ломать ответ
     }
 
-    const { id } = req.params;
-    await pool.query('DELETE FROM properties WHERE id = $1', [id]);
-    
     res.json({ success: true, message: 'Удалено' });
   } catch (error) {
     next(error);
@@ -233,15 +292,8 @@ router.delete('/properties/:id', authMiddleware, apiLimiter, async (req, res, ne
 });
 
 // Статистика для админки
-router.get('/stats', authMiddleware, apiLimiter, async (req, res, next) => {
+router.get('/stats', authMiddleware, requireAdmin, apiLimiter, async (req, res, next) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        error: { message: 'Доступ запрещён' }
-      });
-    }
-
     const totalProps = await pool.query('SELECT COUNT(*) FROM properties');
     const totalApps = await pool.query('SELECT COUNT(*) FROM applications');
     const newApps = await pool.query("SELECT COUNT(*) FROM applications WHERE status = 'new'");
