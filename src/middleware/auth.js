@@ -17,8 +17,9 @@ const authMiddleware = async (req, res, next) => {
     }
 
     const token = authHeader.split(' ')[1];
-    // Секрет обязателен — проверка его наличия выполнена в config/env.js
-    const decoded = jwt.verify(token, config.JWT_SECRET);
+    // Секрет обязателен — проверка его наличия выполнена в config/env.js.
+    // Алгоритм фиксируем явно, чтобы исключить атаки типа algorithm confusion.
+    const decoded = jwt.verify(token, config.JWT_SECRET, { algorithms: ['HS256'] });
 
     let dbUser;
     try {

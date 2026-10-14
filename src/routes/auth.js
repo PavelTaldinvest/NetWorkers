@@ -85,7 +85,7 @@ router.post('/login', authLimiter, loginValidation, async (req, res, next) => {
     const token = jwt.sign(
       { id: user.id, username: user.username, role: user.role },
       config.JWT_SECRET, // секрет обязателен — валидация в config/env.js
-      { expiresIn: '24h' }
+      { algorithm: 'HS256', expiresIn: '24h' }
     );
 
     res.json({
