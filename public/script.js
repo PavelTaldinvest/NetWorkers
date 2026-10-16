@@ -74,6 +74,11 @@ const translations = {
         status_contacted: 'Контакт',
         status_completed: 'Завершена',
         status_cancelled: 'Отменена',
+        clear_apps: 'Очистить заявки',
+        clear_selected: 'Удалить выбранные',
+        confirm_clear_all: 'Удалить ВСЕ заявки? Действие необратимо.',
+        confirm_clear_selected: 'Удалить заявки с выбранными статусами?',
+        apps_cleared: 'Удалено заявок',
         prop_active: 'Активен',
         prop_sold: 'Продан',
         prop_rented: 'Аренда',
@@ -143,6 +148,11 @@ const translations = {
         status_contacted: 'Contacted',
         status_completed: 'Completed',
         status_cancelled: 'Cancelled',
+        clear_apps: 'Clear applications',
+        clear_selected: 'Delete selected',
+        confirm_clear_all: 'Delete ALL applications? This cannot be undone.',
+        confirm_clear_selected: 'Delete applications with the selected statuses?',
+        apps_cleared: 'Applications deleted',
         prop_active: 'Active',
         prop_sold: 'Sold',
         prop_rented: 'Rented',
@@ -825,12 +835,52 @@ async function loadAdminApplications() {
                         <option value="completed" ${a.status === 'completed' ? 'selected' : ''}>${t('status_completed')}</option>
                         <option value="cancelled" ${a.status === 'cancelled' ? 'selected' : ''}>${t('status_cancelled')}</option>
                     </select>
+                    <button class="btn btn-sm btn-danger" onclick="deleteApplication(${a.id})" title="${t('delete')}">✕</button>
                 </td>
             </tr>
         `).join('');
     } catch (err) {
         console.error('Ошибка загрузки заявок (админ):', err);
         handleAuthError(err);
+    }
+}
+
+// Удалить одну заявку (с подтверждением)
+async function deleteApplication(id) {
+    if (!confirm(`${t('confirm_delete')} #${id}?`)) return;
+    try {
+        await apiFetch(`/admin/applications/${id}`, {
+            method: 'DELETE',
+            headers: authHeaders()
+        });
+        loadAdminApplications();
+        loadStats();
+    } catch (err) {
+        console.error('Ошибка удаления заявки:', err);
+        handleAuthError(err);
+        alert(err.message);
+    }
+}
+
+// Массовая очистка заявок по выбранным статусам (пусто = все)
+async function clearApplications() {
+    const checked = Array.from(document.querySelectorAll('.clear-status:checked')).map(cb => cb.value);
+    if (checked.length === 0 && !confirm(t('confirm_clear_all'))) return;
+    if (checked.length > 0 && !confirm(t('confirm_clear_selected'))) return;
+    try {
+        const qs = checked.length ? `?statuses=${encodeURIComponent(checked.join(','))}` : '';
+        const data = await apiFetch(`/admin/applications${qs}`, {
+            method: 'DELETE',
+            headers: authHeaders()
+        });
+        alert(`${t('apps_cleared')}: ${data.deleted}`);
+        document.querySelectorAll('.clear-status').forEach(cb => { cb.checked = false; });
+        loadAdminApplications();
+        loadStats();
+    } catch (err) {
+        console.error('Ошибка очистки заявок:', err);
+        handleAuthError(err);
+        alert(err.message);
     }
 }
 
