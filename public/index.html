@@ -3,10 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Egypt Estate — виллы, апартаменты и коммерческая недвижимость на побережье Красного моря в Египте.">
+    <meta name="theme-color" content="#c9a227">
     <title>Egypt Estate - Недвижимость в Египте</title>
     <link rel="icon" type="image/png" href="/favicon.png">
+    <!-- Шрифты: заголовки + основной текст -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Раннее применение темы из localStorage, чтобы избежать «мигания» белой страницы (FOUC) -->
+    <script>
+        try {
+            const s = JSON.parse(localStorage.getItem('egyptEstateSettings') || '{}');
+            if (s.theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+        } catch (e) { /* повреждённые настройки игнорируем */ }
+    </script>
 </head>
 <body>
     <header class="header">
@@ -232,7 +245,7 @@
                                 <input type="url" id="propImage" placeholder="URL изображения (необязательно)">
                             </div>
                             <div class="form-row">
-                                <label style="align-self:center;">Или файл:</label>
+                                <label class="file-label" for="propImageFile">Или файл:</label>
                                 <input type="file" id="propImageFile" accept="image/jpeg,image/png,image/gif,image/webp">
                             </div>
                             <button type="submit" class="btn btn-primary" data-lang-key="add_property">Добавить объект</button>
@@ -248,9 +261,9 @@
     </footer>
 
     <!-- Property Modal -->
-    <div id="propertyModal" class="modal">
+    <div id="propertyModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
         <div class="modal-content">
-            <span class="close" onclick="closeModal()">&times;</span>
+            <button type="button" class="close" onclick="closeModal()" aria-label="Закрыть">&times;</button>
             <img id="modalImage" src="" alt="">
             <h2 id="modalTitle"></h2>
             <p id="modalPrice" class="price"></p>

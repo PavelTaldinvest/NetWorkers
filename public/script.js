@@ -423,7 +423,7 @@ function renderProperties(properties, containerId) {
     if (!container) return;
 
     if (!properties || properties.length === 0) {
-        container.innerHTML = `<p style="text-align:center;padding:40px;">${t('no_properties')}</p>`;
+        container.innerHTML = `<p class="empty-state"><i class="fas fa-compass" style="display:block;font-size:2rem;margin-bottom:10px;color:var(--primary-color);"></i>${t('no_properties')}</p>`;
         return;
     }
 
@@ -432,7 +432,7 @@ function renderProperties(properties, containerId) {
         const city = state.language === 'ru' ? prop.city_name_ru : prop.city_name_en;
         return `
             <div class="property-card" onclick="openPropertyModal(${prop.id})">
-                <img src="${escapeHtml(prop.image_url || '/favicon.png')}" alt="${escapeHtml(title)}">
+                <img src="${escapeHtml(prop.image_url || '/favicon.png')}" alt="${escapeHtml(title)}" loading="lazy">
                 <div class="property-card-content">
                     <h3 class="property-card-title">${escapeHtml(title)}</h3>
                     <p class="property-card-price">${convertPrice(prop.price_usd)}</p>
@@ -540,10 +540,12 @@ async function openPropertyModal(id) {
     document.getElementById('modalPropertyId').value = id;
 
     document.getElementById('propertyModal').classList.add('active');
+    document.body.style.overflow = 'hidden'; // блокируем прокрутку фона за модалкой
 }
 
 function closeModal() {
     document.getElementById('propertyModal').classList.remove('active');
+    document.body.style.overflow = '';
 }
 
 // ==================== Заявки (публичные) ====================
@@ -795,6 +797,13 @@ function appStatusLabel(s) {
     return t(map[s] || s);
 }
 
+// Цветной бейдж статуса заявки (визуальное оформление, статус не меняет)
+function appStatusBadge(s) {
+    const known = ['new', 'contacted', 'completed', 'cancelled'];
+    const cls = known.includes(s) ? s : 'new';
+    return `<span class="badge badge-${cls}">${escapeHtml(appStatusLabel(s))}</span>`;
+}
+
 async function loadAdminApplications() {
     const tbody = document.getElementById('adminApplicationsTable');
     try {
@@ -807,8 +816,8 @@ async function loadAdminApplications() {
                 <td>${escapeHtml(a.customer_email || '-')}</td>
                 <td>${escapeHtml((state.language === 'ru' ? a.title_ru : a.title_en) || '-')}</td>
                 <td>${escapeHtml(a.message || '-')}</td>
-                <td>${appStatusLabel(a.status)}</td>
-                <td><input type="text" id="appComment-${a.id}" value="${escapeHtml(a.admin_comment || '')}" style="padding:5px; width:120px;"></td>
+                <td>${appStatusBadge(a.status)}</td>
+                <td><input type="text" id="appComment-${a.id}" value="${escapeHtml(a.admin_comment || '')}" class="app-comment-input"></td>
                 <td>
                     <select onchange="updateAppStatus(${a.id}, this.value)">
                         <option value="new" ${a.status === 'new' ? 'selected' : ''}>${t('status_new')}</option>
@@ -990,3 +999,11 @@ window.onclick = function (event) {
         closeModal();
     }
 };
+
+// Закрытие модалки по клавише Escape (доступность)
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        const modal = document.getElementById('propertyModal');
+        if (modal && modal.classList.contains('active')) closeModal();
+    }
+});
