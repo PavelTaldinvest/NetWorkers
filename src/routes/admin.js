@@ -61,7 +61,7 @@ router.get('/applications', authMiddleware, requireAdmin, apiLimiter, async (req
       FROM applications a
       LEFT JOIN properties p ON a.property_id = p.id
       LEFT JOIN users u ON a.user_id = u.id
-      ORDER BY a.created_at DESC
+      ORDER BY a.created_at DESC, a.id DESC
     `);
     
     res.json({ success: true, data: result.rows });
@@ -150,7 +150,7 @@ router.get('/applications/:id/history', authMiddleware, requireAdmin, apiLimiter
 // Получить все объекты (админ)
 router.get('/properties', authMiddleware, requireAdmin, apiLimiter, async (req, res, next) => {
   try {
-    const result = await pool.query('SELECT * FROM properties ORDER BY created_at DESC');
+    const result = await pool.query('SELECT * FROM properties ORDER BY created_at DESC, id DESC');
     res.json({ success: true, data: result.rows });
   } catch (error) {
     next(error);
@@ -286,6 +286,59 @@ router.delete('/properties/:id', authMiddleware, requireAdmin, apiLimiter, async
     }
 
     res.json({ success: true, message: 'Удалено' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Удалить заявку
+router.delete('/applications/:id', authMiddleware, requireAdmin, apiLimiter, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    if (!String(id).match(/^\d+$/)) {
+      return res.status(400).json({ success: false, error: { message: 'Неверный ID заявки' } });
+    }
+
+    const found = await pool.query('SELECT id FROM applications WHERE id = $1', [id]);
+    if (found.rows.length === 0) {
+      return res.status(404).json({ success: false, error: { message: 'Заявка не найдена' } });
+    }
+
+    // История изменений удаляется каскадно (FK ... ON DELETE CASCADE в application_history)
+    await pool.query('DELETE FROM applications WHERE id = $1', [id]);
+
+    res.json({ success: true, message: 'Удалено' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Очистка заявок: удаляет все или только выбранные статусы (?statuses=new,cancelled)
+router.delete('/applications', authMiddleware, requireAdmin, apiLimiter, async (req, res, next) => {
+  try {
+    const ALLOWED_STATUSES = ['new', 'contacted', 'completed', 'cancelled'];
+    const statuses = String(req.query.statuses || '')
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean);
+
+    for (const s of statuses) {
+      if (!ALLOWED_STATUSES.includes(s)) {
+        return res.status(400).json({
+          success: false,
+          error: { message: `Статус должен быть одним из: ${ALLOWED_STATUSES.join(', ')}` }
+        });
+      }
+    }
+
+    let result;
+    if (statuses.length > 0) {
+      result = await pool.query('DELETE FROM applications WHERE status = ANY($1::text[]) RETURNING id', [statuses]);
+    } else {
+      result = await pool.query('DELETE FROM applications RETURNING id');
+    }
+
+    res.json({ success: true, data: { deleted: result.rows.length } });
   } catch (error) {
     next(error);
   }

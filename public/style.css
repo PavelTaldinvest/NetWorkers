@@ -984,3 +984,42 @@ body {
         scroll-behavior: auto !important;
     }
 }
+
+/* ==================== Панель очистки заявок (админ) ==================== */
+.admin-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+    padding: 10px 14px;
+    background: var(--bg-secondary, rgba(128, 128, 128, 0.06));
+    border: 1px solid var(--border-color, rgba(128, 128, 128, 0.2));
+    border-radius: var(--radius-md, 10px);
+}
+
+.admin-toolbar-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted, #6b7280);
+}
+
+.clear-check {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+.clear-check input[type="checkbox"] {
+    width: 15px;
+    height: 15px;
+    accent-color: var(--primary, #c9a227);
+    cursor: pointer;
+}
+
+.admin-clear-btn {
+    margin-left: auto;
+}

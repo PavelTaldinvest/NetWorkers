@@ -58,7 +58,7 @@ router.get('/', async (req, res, next) => {
       paramCount++;
     }
 
-    query += ` ORDER BY p.created_at DESC`;
+    query += ` ORDER BY p.created_at DESC, p.id DESC`;
     if (limit !== null) {
       query += ` LIMIT $${paramCount} OFFSET $${paramCount + 1}`;
       params.push(limit, offset);
