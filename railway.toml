@@ -1,0 +1,9 @@
+# Конфигурация деплоя на Railway.app (https://docs.railway.app)
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+startCommand = "node server.js"
+healthcheckPath = "/"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
